@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Creating or Extending Validator Classes &mdash; jsonschema 2.5.1.post12 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.5.1.post12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="index.html" />
+    <link rel="next" title="Frequently Asked Questions" href="faq.html" />
+    <link rel="prev" title="Resolving JSON References" href="references.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="faq.html" title="Frequently Asked Questions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="references.html" title="Resolving JSON References"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="creating-or-extending-validator-classes">
+<span id="creating-validators"></span><h1>Creating or Extending Validator Classes<a class="headerlink" href="#creating-or-extending-validator-classes" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="jsonschema.validators.create">
+<code class="descclassname">jsonschema.validators.</code><code class="descname">create</code><span class="sig-paren">(</span><em>meta_schema</em>, <em>validators=()</em>, <em>version=None</em>, <em>default_types=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new validator class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>meta_schema</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; the meta schema for the new validator class</li>
+<li><strong>validators</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; <p>a mapping from names to callables, where
+each callable will validate the schema property with the given
+name.</p>
+<p>Each callable should take 4 arguments:</p>
+<blockquote>
+<div><ol class="arabic">
+<li>a validator instance,</li>
+<li>the value of the property being validated within the instance</li>
+<li>the instance</li>
+<li>the schema</li>
+</ol>
+</div></blockquote>
+</li>
+<li><strong>version</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; an identifier for the version that this validator
+class will validate. If provided, the returned validator class
+will have its <code class="docutils literal"><span class="pre">__name__</span></code> set to include the version, and also
+will have <a class="reference internal" href="#jsonschema.validators.validates" title="jsonschema.validators.validates"><code class="xref py py-func docutils literal"><span class="pre">validates()</span></code></a> automatically called for the given
+version.</li>
+<li><strong>default_types</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; a default mapping to use for instances
+of the validator class when mapping between JSON types to Python
+types. The default for this argument is probably fine. Instances
+can still have their types customized on a per-instance basis.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a new <a class="reference internal" href="validate.html#jsonschema.IValidator" title="jsonschema.IValidator"><code class="xref py py-class docutils literal"><span class="pre">jsonschema.IValidator</span></code></a> class</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jsonschema.validators.extend">
+<code class="descclassname">jsonschema.validators.</code><code class="descname">extend</code><span class="sig-paren">(</span><em>validator</em>, <em>validators</em>, <em>version=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new validator class by extending an existing one.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>validator</strong> (<a class="reference internal" href="validate.html#jsonschema.IValidator" title="jsonschema.IValidator"><em>jsonschema.IValidator</em></a>) &#8211; an existing validator class</li>
+<li><strong>validators</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; <p>a mapping of new validator callables to extend
+with, whose structure is as in <a class="reference internal" href="#jsonschema.validators.create" title="jsonschema.validators.create"><code class="xref py py-func docutils literal"><span class="pre">create()</span></code></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Any validator callables with the same name as an existing one will
+(silently) replace the old validator callable entirely, effectively
+overriding any validation done in the &#8220;parent&#8221; validator class.</p>
+<p class="last">If you wish to instead extend the behavior of a parent&#8217;s
+validator callable, delegate and call it directly in
+the new validator function by retrieving it using
+<code class="docutils literal"><span class="pre">OldValidator.VALIDATORS[&quot;validator_name&quot;]</span></code>.</p>
+</div>
+</li>
+<li><strong>version</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; a version for the new validator class</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a new <a class="reference internal" href="validate.html#jsonschema.IValidator" title="jsonschema.IValidator"><code class="xref py py-class docutils literal"><span class="pre">jsonschema.IValidator</span></code></a> class</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Meta Schemas</p>
+<p>The new validator class will have its parent&#8217;s meta schema.</p>
+<p class="last">If you wish to change or extend the meta schema in the new
+validator class, modify <code class="docutils literal"><span class="pre">META_SCHEMA</span></code> directly on the returned
+class. Note that no implicit copying is done, so a copy should
+likely be made before modifying it, in order to not affect the
+old validator.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="jsonschema.validators.validator_for">
+<code class="descclassname">jsonschema.validators.</code><code class="descname">validator_for</code><span class="sig-paren">(</span><em>schema</em>, <em>default=&lt;unset&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#validator_for"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.validator_for" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the validator class appropriate for validating the given schema.</p>
+<p>Uses the <a class="reference external" href="http://json-schema.org/latest/json-schema-core.html#anchor22">$schema</a> property that should be present in the given
+schema to look up the appropriate validator class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>schema</strong> &#8211; the schema to look at</li>
+<li><strong>default</strong> &#8211; the default to return if the appropriate validator class
+cannot be determined. If unprovided, the default is to return
+<code class="xref py py-class docutils literal"><span class="pre">Draft4Validator</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jsonschema.validators.validates">
+<code class="descclassname">jsonschema.validators.</code><code class="descname">validates</code><span class="sig-paren">(</span><em>version</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#validates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.validates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register the decorated validator for a <code class="docutils literal"><span class="pre">version</span></code> of the specification.</p>
+<p>Registered validators and their meta schemas will be considered when
+parsing <code class="docutils literal"><span class="pre">$schema</span></code> properties&#8217; URIs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>version</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; an identifier to use as the version&#8217;s name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a class decorator to decorate the validator with the version</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="section" id="creating-validation-errors">
+<h2>Creating Validation Errors<a class="headerlink" href="#creating-validation-errors" title="Permalink to this headline">¶</a></h2>
+<p>Any validating function that validates against a subschema should call
+<code class="xref py py-meth docutils literal"><span class="pre">ValidatorMixin.descend()</span></code>, rather than <code class="xref py py-meth docutils literal"><span class="pre">ValidatorMixin.iter_errors()</span></code>.
+If it recurses into the instance, or schema, it should pass one or both of the
+<code class="docutils literal"><span class="pre">path</span></code> or <code class="docutils literal"><span class="pre">schema_path</span></code> arguments to <code class="xref py py-meth docutils literal"><span class="pre">ValidatorMixin.descend()</span></code> in
+order to properly maintain where in the instance or schema respectively the
+error occurred.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Creating or Extending Validator Classes</a><ul>
+<li><a class="reference internal" href="#creating-validation-errors">Creating Validation Errors</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="references.html"
+                        title="previous chapter">Resolving JSON References</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="faq.html"
+                        title="next chapter">Frequently Asked Questions</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="faq.html" title="Frequently Asked Questions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="references.html" title="Resolving JSON References"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Julian Berman.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

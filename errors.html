@@ -1,0 +1,608 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Handling Validation Errors &mdash; jsonschema 2.5.1.post12 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.5.1.post12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="index.html" />
+    <link rel="next" title="Resolving JSON References" href="references.html" />
+    <link rel="prev" title="Schema Validation" href="validate.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="references.html" title="Resolving JSON References"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="validate.html" title="Schema Validation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="handling-validation-errors">
+<h1>Handling Validation Errors<a class="headerlink" href="#handling-validation-errors" title="Permalink to this headline">¶</a></h1>
+<p>When an invalid instance is encountered, a <a class="reference internal" href="#jsonschema.exceptions.ValidationError" title="jsonschema.exceptions.ValidationError"><code class="xref py py-exc docutils literal"><span class="pre">ValidationError</span></code></a> will be
+raised or returned, depending on which method or function is used.</p>
+<dl class="exception">
+<dt id="jsonschema.exceptions.ValidationError">
+<em class="property">exception </em><code class="descclassname">jsonschema.exceptions.</code><code class="descname">ValidationError</code><span class="sig-paren">(</span><em>message</em>, <em>validator=&lt;unset&gt;</em>, <em>path=()</em>, <em>cause=None</em>, <em>context=()</em>, <em>validator_value=&lt;unset&gt;</em>, <em>instance=&lt;unset&gt;</em>, <em>schema=&lt;unset&gt;</em>, <em>schema_path=()</em>, <em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#ValidationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.exceptions.ValidationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>The instance didn&#8217;t properly validate under the provided schema.</p>
+<p>The information carried by an error roughly breaks down into:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="27%" />
+<col width="30%" />
+<col width="43%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">What Happened</th>
+<th class="head">Why Did It Happen</th>
+<th class="head">What Was Being Validated</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><a class="reference internal" href="#jsonschema.exceptions.ValidationError.message" title="jsonschema.exceptions.ValidationError.message"><code class="xref py py-attr docutils literal"><span class="pre">message</span></code></a></td>
+<td><p class="first"><a class="reference internal" href="#jsonschema.exceptions.ValidationError.context" title="jsonschema.exceptions.ValidationError.context"><code class="xref py py-attr docutils literal"><span class="pre">context</span></code></a></p>
+<p class="last"><a class="reference internal" href="#jsonschema.exceptions.ValidationError.cause" title="jsonschema.exceptions.ValidationError.cause"><code class="xref py py-attr docutils literal"><span class="pre">cause</span></code></a></p>
+</td>
+<td><p class="first"><a class="reference internal" href="#jsonschema.exceptions.ValidationError.instance" title="jsonschema.exceptions.ValidationError.instance"><code class="xref py py-attr docutils literal"><span class="pre">instance</span></code></a></p>
+<p><a class="reference internal" href="#jsonschema.exceptions.ValidationError.path" title="jsonschema.exceptions.ValidationError.path"><code class="xref py py-attr docutils literal"><span class="pre">path</span></code></a></p>
+<p><a class="reference internal" href="#jsonschema.exceptions.ValidationError.schema" title="jsonschema.exceptions.ValidationError.schema"><code class="xref py py-attr docutils literal"><span class="pre">schema</span></code></a></p>
+<p><a class="reference internal" href="#jsonschema.exceptions.ValidationError.schema_path" title="jsonschema.exceptions.ValidationError.schema_path"><code class="xref py py-attr docutils literal"><span class="pre">schema_path</span></code></a></p>
+<p><a class="reference internal" href="#jsonschema.exceptions.ValidationError.validator" title="jsonschema.exceptions.ValidationError.validator"><code class="xref py py-attr docutils literal"><span class="pre">validator</span></code></a></p>
+<p class="last"><a class="reference internal" href="#jsonschema.exceptions.ValidationError.validator_value" title="jsonschema.exceptions.ValidationError.validator_value"><code class="xref py py-attr docutils literal"><span class="pre">validator_value</span></code></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.message">
+<code class="descname">message</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.message" title="Permalink to this definition">¶</a></dt>
+<dd><p>A human readable message explaining the error.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.validator">
+<code class="descname">validator</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.validator" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the failed <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#anchor12">validator</a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.validator_value">
+<code class="descname">validator_value</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.validator_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>The value for the failed validator in the schema.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.schema">
+<code class="descname">schema</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>The full schema that this error came from. This is potentially a
+subschema from within the schema that was passed in originally,
+or even an entirely different schema if a <a class="reference external" href="http://json-schema.org/latest/json-schema-core.html#anchor25">$ref</a> was
+followed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.relative_schema_path">
+<code class="descname">relative_schema_path</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.relative_schema_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference external" href="http://docs.python.org/2.7/library/collections.html#collections.deque" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a> containing the path to the failed
+validator within the schema.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.absolute_schema_path">
+<code class="descname">absolute_schema_path</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.absolute_schema_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference external" href="http://docs.python.org/2.7/library/collections.html#collections.deque" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a> containing the path to the failed
+validator within the schema, but always relative to the
+<em>original</em> schema as opposed to any subschema (i.e. the one
+originally passed into a validator class, <em>not</em> <a class="reference internal" href="#jsonschema.exceptions.ValidationError.schema" title="jsonschema.exceptions.ValidationError.schema"><code class="xref py py-attr docutils literal"><span class="pre">schema</span></code></a>).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.schema_path">
+<code class="descname">schema_path</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.schema_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#jsonschema.exceptions.ValidationError.relative_schema_path" title="jsonschema.exceptions.ValidationError.relative_schema_path"><code class="xref py py-attr docutils literal"><span class="pre">relative_schema_path</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.relative_path">
+<code class="descname">relative_path</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.relative_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference external" href="http://docs.python.org/2.7/library/collections.html#collections.deque" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a> containing the path to the
+offending element within the instance. The deque can be empty if
+the error happened at the root of the instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.absolute_path">
+<code class="descname">absolute_path</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.absolute_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference external" href="http://docs.python.org/2.7/library/collections.html#collections.deque" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a> containing the path to the
+offending element within the instance. The absolute path
+is always relative to the <em>original</em> instance that was
+validated (i.e. the one passed into a validation method, <em>not</em>
+<a class="reference internal" href="#jsonschema.exceptions.ValidationError.instance" title="jsonschema.exceptions.ValidationError.instance"><code class="xref py py-attr docutils literal"><span class="pre">instance</span></code></a>). The deque can be empty if the error happened
+at the root of the instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.path">
+<code class="descname">path</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#jsonschema.exceptions.ValidationError.relative_path" title="jsonschema.exceptions.ValidationError.relative_path"><code class="xref py py-attr docutils literal"><span class="pre">relative_path</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.instance">
+<code class="descname">instance</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.instance" title="Permalink to this definition">¶</a></dt>
+<dd><p>The instance that was being validated. This will differ from
+the instance originally passed into <code class="xref py py-meth docutils literal"><span class="pre">validate()</span></code> if the
+validator object was in the process of validating a (possibly
+nested) element within the top-level instance. The path within
+the top-level instance (i.e. <a class="reference internal" href="#jsonschema.exceptions.ValidationError.path" title="jsonschema.exceptions.ValidationError.path"><code class="xref py py-attr docutils literal"><span class="pre">ValidationError.path</span></code></a>) could
+be used to find this object, but it is provided for convenience.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.context">
+<code class="descname">context</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.context" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the error was caused by errors in subschemas, the list of errors
+from the subschemas will be available on this property. The
+<a class="reference internal" href="#jsonschema.exceptions.ValidationError.schema_path" title="jsonschema.exceptions.ValidationError.schema_path"><code class="xref py py-attr docutils literal"><span class="pre">schema_path</span></code></a> and <a class="reference internal" href="#jsonschema.exceptions.ValidationError.path" title="jsonschema.exceptions.ValidationError.path"><code class="xref py py-attr docutils literal"><span class="pre">path</span></code></a> of these errors will be relative
+to the parent error.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.cause">
+<code class="descname">cause</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.cause" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the error was caused by a <em>non</em>-validation error, the exception
+object will be here. Currently this is only used for the exception
+raised by a failed format checker in <code class="xref py py-meth docutils literal"><span class="pre">FormatChecker.check()</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ValidationError.parent">
+<code class="descname">parent</code><a class="headerlink" href="#jsonschema.exceptions.ValidationError.parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>A validation error which this error is the <a class="reference internal" href="#jsonschema.exceptions.ValidationError.context" title="jsonschema.exceptions.ValidationError.context"><code class="xref py py-attr docutils literal"><span class="pre">context</span></code></a> of.
+<code class="docutils literal"><span class="pre">None</span></code> if there wasn&#8217;t one.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>In case an invalid schema itself is encountered, a <a class="reference internal" href="#jsonschema.exceptions.SchemaError" title="jsonschema.exceptions.SchemaError"><code class="xref py py-exc docutils literal"><span class="pre">SchemaError</span></code></a> is
+raised.</p>
+<dl class="exception">
+<dt id="jsonschema.exceptions.SchemaError">
+<em class="property">exception </em><code class="descclassname">jsonschema.exceptions.</code><code class="descname">SchemaError</code><span class="sig-paren">(</span><em>message</em>, <em>validator=&lt;unset&gt;</em>, <em>path=()</em>, <em>cause=None</em>, <em>context=()</em>, <em>validator_value=&lt;unset&gt;</em>, <em>instance=&lt;unset&gt;</em>, <em>schema=&lt;unset&gt;</em>, <em>schema_path=()</em>, <em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#SchemaError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.exceptions.SchemaError" title="Permalink to this definition">¶</a></dt>
+<dd><p>The provided schema is malformed.</p>
+<p>The same attributes are present as for <a class="reference internal" href="#jsonschema.exceptions.ValidationError" title="jsonschema.exceptions.ValidationError"><code class="xref py py-exc docutils literal"><span class="pre">ValidationError</span></code></a>s.</p>
+</dd></dl>
+
+<p>These attributes can be clarified with a short example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;anyOf&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;string&quot;</span><span class="p">,</span> <span class="s">&quot;maxLength&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+            <span class="p">{</span><span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;integer&quot;</span><span class="p">,</span> <span class="s">&quot;minimum&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="n">instance</span> <span class="o">=</span> <span class="p">[{},</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&quot;foo&quot;</span><span class="p">]</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">Draft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+<span class="n">errors</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The error messages in this situation are not very helpful on their own.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>outputs:</p>
+<div class="highlight-none"><div class="highlight"><pre>{} is not valid under any of the given schemas
+3 is not valid under any of the given schemas
+&#39;foo&#39; is not valid under any of the given schemas
+</pre></div>
+</div>
+<p>If we look at <a class="reference internal" href="#jsonschema.exceptions.ValidationError.path" title="jsonschema.exceptions.ValidationError.path"><code class="xref py py-attr docutils literal"><span class="pre">path</span></code></a> on each of the errors, we can find
+out which elements in the instance correspond to each of the errors. In
+this example, <a class="reference internal" href="#jsonschema.exceptions.ValidationError.path" title="jsonschema.exceptions.ValidationError.path"><code class="xref py py-attr docutils literal"><span class="pre">path</span></code></a> will have only one element, which
+will be the index in our list.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-none"><div class="highlight"><pre>[0]
+[1]
+[2]
+</pre></div>
+</div>
+<p>Since our schema contained nested subschemas, it can be helpful to look at
+the specific part of the instance and subschema that caused each of the errors.
+This can be seen with the <a class="reference internal" href="#jsonschema.exceptions.ValidationError.instance" title="jsonschema.exceptions.ValidationError.instance"><code class="xref py py-attr docutils literal"><span class="pre">instance</span></code></a> and
+<a class="reference internal" href="#jsonschema.exceptions.ValidationError.schema" title="jsonschema.exceptions.ValidationError.schema"><code class="xref py py-attr docutils literal"><span class="pre">schema</span></code></a> attributes.</p>
+<p>With validators like <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5.4">anyOf</a>, the <a class="reference internal" href="#jsonschema.exceptions.ValidationError.context" title="jsonschema.exceptions.ValidationError.context"><code class="xref py py-attr docutils literal"><span class="pre">context</span></code></a>
+attribute can be used to see the sub-errors which caused the failure. Since
+these errors actually came from two separate subschemas, it can be helpful to
+look at the <a class="reference internal" href="#jsonschema.exceptions.ValidationError.schema_path" title="jsonschema.exceptions.ValidationError.schema_path"><code class="xref py py-attr docutils literal"><span class="pre">schema_path</span></code></a> attribute as well to see where
+exactly in the schema each of these errors come from. In the case of sub-errors
+from the <a class="reference internal" href="#jsonschema.exceptions.ValidationError.context" title="jsonschema.exceptions.ValidationError.context"><code class="xref py py-attr docutils literal"><span class="pre">context</span></code></a> attribute, this path will be relative
+to the <a class="reference internal" href="#jsonschema.exceptions.ValidationError.schema_path" title="jsonschema.exceptions.ValidationError.schema_path"><code class="xref py py-attr docutils literal"><span class="pre">schema_path</span></code></a> of the parent error.</p>
+<div class="highlight-python"><div class="highlight"><pre>for error in errors:
+    for suberror in sorted(error.context, key=lambda e: e.schema_path):
+        print(list(suberror.schema_path), suberror.message, sep=&quot;, &quot;)
+</pre></div>
+</div>
+<div class="highlight-none"><div class="highlight"><pre>[0, &#39;type&#39;], {} is not of type &#39;string&#39;
+[1, &#39;type&#39;], {} is not of type &#39;integer&#39;
+[0, &#39;type&#39;], 3 is not of type &#39;string&#39;
+[1, &#39;minimum&#39;], 3 is less than the minimum of 5
+[0, &#39;maxLength&#39;], &#39;foo&#39; is too long
+[1, &#39;type&#39;], &#39;foo&#39; is not of type &#39;integer&#39;
+</pre></div>
+</div>
+<p>The string representation of an error combines some of these attributes for
+easier debugging.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">print</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-none"><div class="highlight"><pre>3 is not valid under any of the given schemas
+
+Failed validating &#39;anyOf&#39; in schema[&#39;items&#39;]:
+    {&#39;anyOf&#39;: [{&#39;maxLength&#39;: 2, &#39;type&#39;: &#39;string&#39;},
+               {&#39;minimum&#39;: 5, &#39;type&#39;: &#39;integer&#39;}]}
+
+On instance[1]:
+    3
+</pre></div>
+</div>
+<div class="section" id="errortrees">
+<h2>ErrorTrees<a class="headerlink" href="#errortrees" title="Permalink to this headline">¶</a></h2>
+<p>If you want to programmatically be able to query which properties or validators
+failed when validating a given instance, you probably will want to do so using
+<code class="xref py py-class docutils literal"><span class="pre">ErrorTree</span></code> objects.</p>
+<dl class="class">
+<dt id="jsonschema.validators.ErrorTree">
+<em class="property">class </em><code class="descclassname">jsonschema.validators.</code><code class="descname">ErrorTree</code><span class="sig-paren">(</span><em>errors=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#ErrorTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.ErrorTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>ErrorTrees make it easier to check which validations failed.</p>
+<dl class="attribute">
+<dt id="jsonschema.exceptions.ErrorTree.errors">
+<code class="descname">errors</code><a class="headerlink" href="#jsonschema.exceptions.ErrorTree.errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>The mapping of validator names to the error objects (usually
+<a class="reference internal" href="#jsonschema.exceptions.ValidationError" title="jsonschema.exceptions.ValidationError"><code class="xref py py-class docutils literal"><span class="pre">ValidationError</span></code></a>s) at this level of the tree.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.validators.ErrorTree.__contains__">
+<code class="descname">__contains__</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#ErrorTree.__contains__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.ErrorTree.__contains__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether <code class="docutils literal"><span class="pre">instance[index]</span></code> has any errors.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.validators.ErrorTree.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#ErrorTree.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.ErrorTree.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the child tree one level down at the given <code class="docutils literal"><span class="pre">index</span></code>.</p>
+<p>If the index is not in the instance that this tree corresponds to and
+is not known by this tree, whatever error would be raised by
+<code class="docutils literal"><span class="pre">instance.__getitem__</span></code> will be propagated (usually this is some
+subclass of <code class="xref py py-class docutils literal"><span class="pre">LookupError</span></code>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.validators.ErrorTree.__iter__">
+<code class="descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#ErrorTree.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.ErrorTree.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate (non-recursively) over the indices in the instance with errors.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.validators.ErrorTree.__len__">
+<code class="descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#ErrorTree.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validators.ErrorTree.__len__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <code class="xref py py-attr docutils literal"><span class="pre">total_errors</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.validators.ErrorTree.total_errors">
+<code class="descname">total_errors</code><a class="headerlink" href="#jsonschema.validators.ErrorTree.total_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total number of errors in the entire tree, including children.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>Consider the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;type&quot;</span> <span class="p">:</span> <span class="s">&quot;array&quot;</span><span class="p">,</span>
+    <span class="s">&quot;items&quot;</span> <span class="p">:</span> <span class="p">{</span><span class="s">&quot;type&quot;</span> <span class="p">:</span> <span class="s">&quot;number&quot;</span><span class="p">,</span> <span class="s">&quot;enum&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]},</span>
+    <span class="s">&quot;minItems&quot;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">instance</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;spam&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>For clarity&#8217;s sake, the given instance has three errors under this schema:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">v</span> <span class="o">=</span> <span class="n">Draft3Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">([</span><span class="s">&quot;spam&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none"><div class="highlight"><pre>&#39;spam&#39; is not of type &#39;number&#39;
+&#39;spam&#39; is not one of [1, 2, 3]
+[&#39;spam&#39;, 2] is too short
+</pre></div>
+</div>
+<p>Let&#8217;s construct an <code class="xref py py-class docutils literal"><span class="pre">ErrorTree</span></code> so that we can query the errors a bit
+more easily than by just iterating over the error objects.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">tree</span> <span class="o">=</span> <span class="n">ErrorTree</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="n">instance</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>As you can see, <code class="xref py py-class docutils literal"><span class="pre">ErrorTree</span></code> takes an iterable of
+<a class="reference internal" href="#jsonschema.exceptions.ValidationError" title="jsonschema.exceptions.ValidationError"><code class="xref py py-class docutils literal"><span class="pre">ValidationError</span></code></a>s when constructing a tree so you
+can directly pass it the return value of a validator object&#8217;s
+<code class="xref py py-attr docutils literal"><span class="pre">iter_errors</span></code> method.</p>
+<p><code class="xref py py-class docutils literal"><span class="pre">ErrorTree</span></code>s support a number of useful operations. The first one we
+might want to perform is to check whether a given element in our instance
+failed validation. We do so using the <a class="reference external" href="http://docs.python.org/2.7/reference/expressions.html#in" title="(in Python v2.7)"><code class="xref std std-keyword docutils literal"><span class="pre">in</span></code></a> operator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="mi">0</span> <span class="ow">in</span> <span class="n">tree</span>
+<span class="go">True</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="mi">1</span> <span class="ow">in</span> <span class="n">tree</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<p>The interpretation here is that the 0th index into the instance (<code class="docutils literal"><span class="pre">&quot;spam&quot;</span></code>)
+did have an error (in fact it had 2), while the 1th index (<code class="docutils literal"><span class="pre">2</span></code>) did not (i.e.
+it was valid).</p>
+<p>If we want to see which errors a child had, we index into the tree and look at
+the <a class="reference internal" href="#jsonschema.exceptions.ErrorTree.errors" title="jsonschema.exceptions.ErrorTree.errors"><code class="xref py py-attr docutils literal"><span class="pre">errors</span></code></a> attribute.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">tree</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span>
+<span class="go">[&#39;enum&#39;, &#39;type&#39;]</span>
+</pre></div>
+</div>
+<p>Here we see that the <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5.1">enum</a> and <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5">type</a> validators failed
+for index <code class="docutils literal"><span class="pre">0</span></code>. In fact <a class="reference internal" href="#jsonschema.exceptions.ErrorTree.errors" title="jsonschema.exceptions.ErrorTree.errors"><code class="xref py py-attr docutils literal"><span class="pre">errors</span></code></a> is a dict, whose values are
+the <a class="reference internal" href="#jsonschema.exceptions.ValidationError" title="jsonschema.exceptions.ValidationError"><code class="xref py py-class docutils literal"><span class="pre">ValidationError</span></code></a>s, so we can get at those directly if we want
+them.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">tree</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">errors</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+<span class="go">&#39;spam&#39; is not of type &#39;number&#39;</span>
+</pre></div>
+</div>
+<p>Of course this means that if we want to know if a given named
+validator failed for a given index, we check for its presence in
+<a class="reference internal" href="#jsonschema.exceptions.ErrorTree.errors" title="jsonschema.exceptions.ErrorTree.errors"><code class="xref py py-attr docutils literal"><span class="pre">errors</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="s">&quot;enum&quot;</span> <span class="ow">in</span> <span class="n">tree</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">errors</span>
+<span class="go">True</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="s">&quot;minimum&quot;</span> <span class="ow">in</span> <span class="n">tree</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">errors</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<p>Finally, if you were paying close enough attention, you&#8217;ll notice that we
+haven&#8217;t seen our <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.3.3">minItems</a> error appear anywhere yet. This is
+because <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.3.3">minItems</a> is an error that applies globally to the instance
+itself. So it appears in the root node of the tree.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="s">&quot;minItems&quot;</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">errors</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>That&#8217;s all you need to know to use error trees.</p>
+<p>To summarize, each tree contains child trees that can be accessed by
+indexing the tree to get the corresponding child tree for a given index
+into the instance. Each tree and child has a <a class="reference internal" href="#jsonschema.exceptions.ErrorTree.errors" title="jsonschema.exceptions.ErrorTree.errors"><code class="xref py py-attr docutils literal"><span class="pre">errors</span></code></a>
+attribute, a dict, that maps the failed validator name to the
+corresponding validation error.</p>
+</div>
+<div class="section" id="best-match-and-relevance">
+<h2>best_match and relevance<a class="headerlink" href="#best-match-and-relevance" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="#jsonschema.exceptions.best_match" title="jsonschema.exceptions.best_match"><code class="xref py py-func docutils literal"><span class="pre">best_match()</span></code></a> function is a simple but useful function for attempting
+to guess the most relevant error in a given bunch.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">Draft4Validator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">jsonschema.exceptions</span> <span class="kn">import</span> <span class="n">best_match</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;array&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&quot;minItems&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">best_match</span><span class="p">(</span><span class="n">Draft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="mi">11</span><span class="p">))</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+<span class="go">11 is not of type &#39;array&#39;</span>
+</pre></div>
+</div>
+<dl class="function">
+<dt id="jsonschema.exceptions.best_match">
+<code class="descclassname">jsonschema.exceptions.</code><code class="descname">best_match</code><span class="sig-paren">(</span><em>errors</em>, <em>key=&lt;function relevance&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#best_match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.exceptions.best_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to find an error that appears to be the best match among given errors.</p>
+<p>In general, errors that are higher up in the instance (i.e. for which
+<a class="reference internal" href="#jsonschema.exceptions.ValidationError.path" title="jsonschema.exceptions.ValidationError.path"><code class="xref py py-attr docutils literal"><span class="pre">ValidationError.path</span></code></a> is shorter) are considered better matches,
+since they indicate &#8220;more&#8221; is wrong with the instance.</p>
+<p>If the resulting match is either <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5.5">oneOf</a> or <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5.4">anyOf</a>,
+the <em>opposite</em> assumption is made &#8211; i.e. the deepest error is picked,
+since these validators only need to match once, and any other errors may
+not be relevant.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>errors</strong> (<em>iterable</em>) &#8211; the errors to select from. Do not provide a
+mixture of errors from different validation attempts (i.e. from
+different instances or schemas), since it won&#8217;t produce sensical
+output.</li>
+<li><strong>key</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the key to use when sorting errors. See
+<a class="reference internal" href="#jsonschema.exceptions.relevance" title="jsonschema.exceptions.relevance"><code class="xref py py-attr docutils literal"><span class="pre">relevance</span></code></a> and transitively <a class="reference internal" href="#jsonschema.exceptions.by_relevance" title="jsonschema.exceptions.by_relevance"><code class="xref py py-func docutils literal"><span class="pre">by_relevance()</span></code></a> for more
+details (the default is to sort with the defaults of that function).
+Changing the default is only useful if you want to change the function
+that rates errors but still want the error context decension done by
+this function.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the best matching error, or <code class="docutils literal"><span class="pre">None</span></code> if the iterable was empty</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This function is a heuristic. Its return value may change for a given
+set of inputs from version to version if better heuristics are added.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="jsonschema.exceptions.relevance">
+<code class="descclassname">jsonschema.exceptions.</code><code class="descname">relevance</code><span class="sig-paren">(</span><em>validation_error</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.exceptions.relevance" title="Permalink to this definition">¶</a></dt>
+<dd><p>A key function that sorts errors based on heuristic relevance.</p>
+<p>If you want to sort a bunch of errors entirely, you can use
+this function to do so. Using this function as a key to e.g.
+<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#sorted" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">sorted()</span></code></a> or <a class="reference external" href="http://docs.python.org/2.7/library/functions.html#max" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">max()</span></code></a> will cause more relevant errors to be
+considered greater than less relevant ones.</p>
+<p>Within the different validators that can fail, this function
+considers <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5.4">anyOf</a> and <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5.5">oneOf</a> to be <em>weak</em>
+validation errors, and will sort them lower than other validators at
+the same level in the instance.</p>
+<p>If you want to change the set of weak [or strong] validators you can create
+a custom version of this function with <a class="reference internal" href="#jsonschema.exceptions.by_relevance" title="jsonschema.exceptions.by_relevance"><code class="xref py py-func docutils literal"><span class="pre">by_relevance()</span></code></a> and provide a
+different set of each.</p>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+<span class="gp">... </span>        <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;string&quot;</span><span class="p">},</span>
+<span class="gp">... </span>        <span class="s">&quot;phones&quot;</span><span class="p">:</span> <span class="p">{</span>
+<span class="gp">... </span>            <span class="s">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+<span class="gp">... </span>                <span class="s">&quot;home&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;string&quot;</span><span class="p">}</span>
+<span class="gp">... </span>            <span class="p">},</span>
+<span class="gp">... </span>        <span class="p">},</span>
+<span class="gp">... </span>    <span class="p">},</span>
+<span class="gp">... </span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">instance</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="mi">123</span><span class="p">,</span> <span class="s">&quot;phones&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s">&quot;home&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">123</span><span class="p">]}}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">errors</span> <span class="o">=</span> <span class="n">Draft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span>
+<span class="gp">... </span>    <span class="n">e</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">exceptions</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span>
+<span class="gp">... </span><span class="p">]</span>
+<span class="go">[&#39;home&#39;, &#39;name&#39;]</span>
+</pre></div>
+</div>
+<dl class="function">
+<dt id="jsonschema.exceptions.by_relevance">
+<code class="descclassname">jsonschema.exceptions.</code><code class="descname">by_relevance</code><span class="sig-paren">(</span><em>weak=frozenset(['oneOf'</em>, <em>'anyOf'])</em>, <em>strong=frozenset([])</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/exceptions.html#by_relevance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.exceptions.by_relevance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a key function that can be used to sort errors by relevance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>weak</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#set" title="(in Python v2.7)"><em>set</em></a>) &#8211; a collection of validator names to consider to
+be &#8220;weak&#8221;. If there are two errors at the same level of the
+instance and one is in the set of weak validator names, the
+other error will take priority. By default, <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5.4">anyOf</a>
+and <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5.5">oneOf</a> are considered weak validators and will
+be superceded by other same-level validation errors.</li>
+<li><strong>strong</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#set" title="(in Python v2.7)"><em>set</em></a>) &#8211; a collection of validator names to consider to
+be &#8220;strong&#8221;</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Handling Validation Errors</a><ul>
+<li><a class="reference internal" href="#errortrees">ErrorTrees</a></li>
+<li><a class="reference internal" href="#best-match-and-relevance">best_match and relevance</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="validate.html"
+                        title="previous chapter">Schema Validation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="references.html"
+                        title="next chapter">Resolving JSON References</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="references.html" title="Resolving JSON References"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="validate.html" title="Schema Validation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Julian Berman.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jsonschema._format &mdash; jsonschema 2.5.1.post12 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.5.1.post12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="../../_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for jsonschema._format</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+
+<span class="kn">from</span> <span class="nn">jsonschema.compat</span> <span class="kn">import</span> <span class="n">str_types</span>
+<span class="kn">from</span> <span class="nn">jsonschema.exceptions</span> <span class="kn">import</span> <span class="n">FormatError</span>
+
+
+<div class="viewcode-block" id="FormatChecker"><a class="viewcode-back" href="../../validate.html#jsonschema.FormatChecker">[docs]</a><span class="k">class</span> <span class="nc">FormatChecker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A ``format`` property checker.</span>
+
+<span class="sd">    JSON Schema does not mandate that the ``format`` property actually do any</span>
+<span class="sd">    validation. If validation is desired however, instances of this class can</span>
+<span class="sd">    be hooked into validators to enable format validation.</span>
+
+<span class="sd">    :class:`FormatChecker` objects always return ``True`` when asked about</span>
+<span class="sd">    formats that they do not know how to validate.</span>
+
+<span class="sd">    To check a custom format using a function that takes an instance and</span>
+<span class="sd">    returns a ``bool``, use the :meth:`FormatChecker.checks` or</span>
+<span class="sd">    :meth:`FormatChecker.cls_checks` decorators.</span>
+
+<span class="sd">    :argument iterable formats: the known formats to validate. This argument</span>
+<span class="sd">                                can be used to limit which formats will be used</span>
+<span class="sd">                                during validation.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">checkers</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formats</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">formats</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">checkers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkers</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">checkers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkers</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">formats</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FormatChecker.checks"><a class="viewcode-back" href="../../validate.html#jsonschema.FormatChecker.checks">[docs]</a>    <span class="k">def</span> <span class="nf">checks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Register a decorated function as validating a new format.</span>
+
+<span class="sd">        :argument str format: the format that the decorated function will check</span>
+<span class="sd">        :argument Exception raises: the exception(s) raised by the decorated</span>
+<span class="sd">            function when an invalid instance is found. The exception object</span>
+<span class="sd">            will be accessible as the :attr:`ValidationError.cause` attribute</span>
+<span class="sd">            of the resulting validation error.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">_checks</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">checkers</span><span class="p">[</span><span class="n">format</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">raises</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span>
+        <span class="k">return</span> <span class="n">_checks</span>
+</div>
+    <span class="n">cls_checks</span> <span class="o">=</span> <span class="nb">classmethod</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FormatChecker.check"><a class="viewcode-back" href="../../validate.html#jsonschema.FormatChecker.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">format</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether the instance conforms to the given format.</span>
+
+<span class="sd">        :argument instance: the instance to check</span>
+<span class="sd">        :type: any primitive type (str, number, bool)</span>
+<span class="sd">        :argument str format: the format that instance should conform to</span>
+<span class="sd">        :raises: :exc:`FormatError` if instance does not conform to format</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">format</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkers</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">func</span><span class="p">,</span> <span class="n">raises</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkers</span><span class="p">[</span><span class="n">format</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">cause</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">raises</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">cause</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FormatError</span><span class="p">(</span>
+                <span class="s">&quot;</span><span class="si">%r</span><span class="s"> is not a </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">format</span><span class="p">),</span> <span class="n">cause</span><span class="o">=</span><span class="n">cause</span><span class="p">,</span>
+            <span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FormatChecker.conforms"><a class="viewcode-back" href="../../validate.html#jsonschema.FormatChecker.conforms">[docs]</a>    <span class="k">def</span> <span class="nf">conforms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">format</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether the instance conforms to the given format.</span>
+
+<span class="sd">        :argument instance: the instance to check</span>
+<span class="sd">        :type: any primitive type (str, number, bool)</span>
+<span class="sd">        :argument str format: the format that instance should conform to</span>
+<span class="sd">        :rtype: bool</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">format</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">FormatError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+</div></div>
+<span class="n">_draft_checkers</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;draft3&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&quot;draft4&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+
+
+<span class="k">def</span> <span class="nf">_checks_drafts</span><span class="p">(</span><span class="n">both</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">draft3</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">draft4</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="p">()):</span>
+    <span class="n">draft3</span> <span class="o">=</span> <span class="n">draft3</span> <span class="ow">or</span> <span class="n">both</span>
+    <span class="n">draft4</span> <span class="o">=</span> <span class="n">draft4</span> <span class="ow">or</span> <span class="n">both</span>
+
+    <span class="k">def</span> <span class="nf">wrap</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">draft3</span><span class="p">:</span>
+            <span class="n">_draft_checkers</span><span class="p">[</span><span class="s">&quot;draft3&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">draft3</span><span class="p">)</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">FormatChecker</span><span class="o">.</span><span class="n">cls_checks</span><span class="p">(</span><span class="n">draft3</span><span class="p">,</span> <span class="n">raises</span><span class="p">)(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">draft4</span><span class="p">:</span>
+            <span class="n">_draft_checkers</span><span class="p">[</span><span class="s">&quot;draft4&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">draft4</span><span class="p">)</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">FormatChecker</span><span class="o">.</span><span class="n">cls_checks</span><span class="p">(</span><span class="n">draft4</span><span class="p">,</span> <span class="n">raises</span><span class="p">)(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">wrap</span>
+
+
+<span class="nd">@_checks_drafts</span><span class="p">(</span><span class="s">&quot;email&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">is_email</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="s">&quot;@&quot;</span> <span class="ow">in</span> <span class="n">instance</span>
+
+
+<span class="n">_ipv4_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&quot;^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$&quot;</span><span class="p">)</span>
+
+<span class="nd">@_checks_drafts</span><span class="p">(</span><span class="n">draft3</span><span class="o">=</span><span class="s">&quot;ip-address&quot;</span><span class="p">,</span> <span class="n">draft4</span><span class="o">=</span><span class="s">&quot;ipv4&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">is_ipv4</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_ipv4_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">component</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">255</span> <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">instance</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">))</span>
+
+
+<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="s">&quot;inet_pton&quot;</span><span class="p">):</span>
+    <span class="nd">@_checks_drafts</span><span class="p">(</span><span class="s">&quot;ipv6&quot;</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">is_ipv6</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="n">socket</span><span class="o">.</span><span class="n">inet_pton</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET6</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+
+
+<span class="n">_host_name_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&quot;^[A-Za-z0-9][A-Za-z0-9\.\-]{1,255}$&quot;</span><span class="p">)</span>
+
+<span class="nd">@_checks_drafts</span><span class="p">(</span><span class="n">draft3</span><span class="o">=</span><span class="s">&quot;host-name&quot;</span><span class="p">,</span> <span class="n">draft4</span><span class="o">=</span><span class="s">&quot;hostname&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">is_host_name</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_host_name_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    <span class="n">components</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">components</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">component</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">63</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">return</span> <span class="bp">True</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">rfc3987</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nd">@_checks_drafts</span><span class="p">(</span><span class="s">&quot;uri&quot;</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="ne">ValueError</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">is_uri</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="n">rfc3987</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="s">&quot;URI&quot;</span><span class="p">)</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">strict_rfc3339</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">isodate</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nd">@_checks_drafts</span><span class="p">(</span><span class="s">&quot;date-time&quot;</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">isodate</span><span class="o">.</span><span class="n">ISO8601Error</span><span class="p">))</span>
+        <span class="k">def</span> <span class="nf">is_date</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">True</span>
+            <span class="k">return</span> <span class="n">isodate</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+        <span class="nd">@_checks_drafts</span><span class="p">(</span><span class="s">&quot;date-time&quot;</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">is_date</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">True</span>
+            <span class="k">return</span> <span class="n">strict_rfc3339</span><span class="o">.</span><span class="n">validate_rfc3339</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
+
+<span class="nd">@_checks_drafts</span><span class="p">(</span><span class="s">&quot;regex&quot;</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">is_regex</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
+
+<span class="nd">@_checks_drafts</span><span class="p">(</span><span class="n">draft3</span><span class="o">=</span><span class="s">&quot;date&quot;</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="ne">ValueError</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">is_date</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s">&quot;%Y-%m-</span><span class="si">%d</span><span class="s">&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@_checks_drafts</span><span class="p">(</span><span class="n">draft3</span><span class="o">=</span><span class="s">&quot;time&quot;</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="ne">ValueError</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">is_time</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s">&quot;%H:%M:%S&quot;</span><span class="p">)</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">webcolors</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">is_css_color_code</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">webcolors</span><span class="o">.</span><span class="n">normalize_hex</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
+
+    <span class="nd">@_checks_drafts</span><span class="p">(</span><span class="n">draft3</span><span class="o">=</span><span class="s">&quot;color&quot;</span><span class="p">,</span> <span class="n">raises</span><span class="o">=</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">is_css21_color</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">str_types</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">webcolors</span><span class="o">.</span><span class="n">css21_names_to_hex</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="n">is_css_color_code</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">is_css3_color</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">webcolors</span><span class="o">.</span><span class="n">css3_names_to_hex</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="n">is_css_color_code</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
+
+<span class="n">draft3_format_checker</span> <span class="o">=</span> <span class="n">FormatChecker</span><span class="p">(</span><span class="n">_draft_checkers</span><span class="p">[</span><span class="s">&quot;draft3&quot;</span><span class="p">])</span>
+<span class="n">draft4_format_checker</span> <span class="o">=</span> <span class="n">FormatChecker</span><span class="p">(</span><span class="n">_draft_checkers</span><span class="p">[</span><span class="s">&quot;draft4&quot;</span><span class="p">])</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Julian Berman.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

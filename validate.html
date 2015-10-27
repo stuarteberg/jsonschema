@@ -1,0 +1,639 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Schema Validation &mdash; jsonschema 2.5.1.post12 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.5.1.post12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="index.html" />
+    <link rel="next" title="Handling Validation Errors" href="errors.html" />
+    <link rel="prev" title="jsonschema" href="index.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="errors.html" title="Handling Validation Errors"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="jsonschema"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="schema-validation">
+<h1>Schema Validation<a class="headerlink" href="#schema-validation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-basics">
+<h2>The Basics<a class="headerlink" href="#the-basics" title="Permalink to this headline">¶</a></h2>
+<p>The simplest way to validate an instance under a given schema is to use the
+<a class="reference internal" href="#jsonschema.validate" title="jsonschema.validate"><code class="xref py py-func docutils literal"><span class="pre">validate()</span></code></a> function.</p>
+<dl class="function">
+<dt id="jsonschema.validate">
+<code class="descclassname">jsonschema.</code><code class="descname">validate</code><span class="sig-paren">(</span><em>instance</em>, <em>schema</em>, <em>cls=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate an instance under the given schema.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">validate</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">{</span><span class="s">&quot;maxItems&quot;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">ValidationError</span>: <span class="n">[2, 3, 4] is too long</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#jsonschema.validate" title="jsonschema.validate"><code class="xref py py-func docutils literal"><span class="pre">validate()</span></code></a> will first verify that the provided schema is itself
+valid, since not doing so can lead to less obvious error messages and fail
+in less obvious or consistent ways. If you know you have a valid schema
+already or don&#8217;t care, you might prefer using the
+<a class="reference internal" href="#jsonschema.IValidator.validate" title="jsonschema.IValidator.validate"><code class="xref py py-meth docutils literal"><span class="pre">validate()</span></code></a> method directly on a specific validator
+(e.g. <code class="xref py py-meth docutils literal"><span class="pre">Draft4Validator.validate()</span></code>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>instance</strong> &#8211; the instance to validate</li>
+<li><strong>schema</strong> &#8211; the schema to validate with</li>
+<li><strong>cls</strong> &#8211; an <a class="reference internal" href="#jsonschema.IValidator" title="jsonschema.IValidator"><code class="xref py py-class docutils literal"><span class="pre">IValidator</span></code></a> class that will be used to validate
+the instance.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If the <code class="docutils literal"><span class="pre">cls</span></code> argument is not provided, two things will happen in
+accordance with the specification. First, if the schema has a
+<a class="reference external" href="http://json-schema.org/latest/json-schema-core.html#anchor22">$schema</a> property containing a known meta-schema <a class="footnote-reference" href="#id2" id="id1">[1]</a> then the
+proper validator will be used.  The specification recommends that all
+schemas contain <a class="reference external" href="http://json-schema.org/latest/json-schema-core.html#anchor22">$schema</a> properties for this reason. If no
+<a class="reference external" href="http://json-schema.org/latest/json-schema-core.html#anchor22">$schema</a> property is found, the default validator class is
+<a class="reference internal" href="#jsonschema.Draft4Validator" title="jsonschema.Draft4Validator"><code class="xref py py-class docutils literal"><span class="pre">Draft4Validator</span></code></a>.</p>
+<p>Any other provided positional and keyword arguments will be passed on when
+instantiating the <code class="docutils literal"><span class="pre">cls</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><code class="xref py py-exc docutils literal"><span class="pre">ValidationError</span></code> if the instance is invalid</p>
+<p class="last"><code class="xref py py-exc docutils literal"><span class="pre">SchemaError</span></code> if the schema itself is invalid</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Footnotes</p>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>known by a validator registered with <code class="xref py py-func docutils literal"><span class="pre">validates()</span></code></td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[2]</a></td><td>For information on creating JSON schemas to validate
+your data, there is a good introduction to JSON Schema
+fundamentals underway at <a class="reference external" href="http://spacetelescope.github.io/understanding-json-schema/">Understanding JSON Schema</a></td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="the-validator-interface">
+<h2>The Validator Interface<a class="headerlink" href="#the-validator-interface" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a> defines an (informal) interface that all validator
+classes should adhere to.</p>
+<dl class="class">
+<dt id="jsonschema.IValidator">
+<em class="property">class </em><code class="descclassname">jsonschema.</code><code class="descname">IValidator</code><span class="sig-paren">(</span><em>schema</em>, <em>types=()</em>, <em>resolver=None</em>, <em>format_checker=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.IValidator" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>schema</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; the schema that the validator object
+will validate with. It is assumed to be valid, and providing
+an invalid schema can lead to undefined behavior. See
+<a class="reference internal" href="#jsonschema.IValidator.check_schema" title="jsonschema.IValidator.check_schema"><code class="xref py py-meth docutils literal"><span class="pre">IValidator.check_schema()</span></code></a> to validate a schema first.</li>
+<li><strong>types</strong> (<em>dict or iterable of 2-tuples</em>) &#8211; Override or extend the list of known types when
+validating the <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5">type</a> property. Should map strings (type
+names) to class objects that will be checked via <a class="reference external" href="http://docs.python.org/2.7/library/functions.html#isinstance" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">isinstance()</span></code></a>.
+See <a class="reference internal" href="#validating-types"><span>Validating With Additional Types</span></a> for details.</li>
+<li><strong>resolver</strong> &#8211; an instance of <a class="reference internal" href="references.html#jsonschema.RefResolver" title="jsonschema.RefResolver"><code class="xref py py-class docutils literal"><span class="pre">RefResolver</span></code></a> that will be
+used to resolve <a class="reference external" href="http://json-schema.org/latest/json-schema-core.html#anchor25">$ref</a> properties (JSON references). If
+unprovided, one will be created.</li>
+<li><strong>format_checker</strong> &#8211; an instance of <a class="reference internal" href="#jsonschema.FormatChecker" title="jsonschema.FormatChecker"><code class="xref py py-class docutils literal"><span class="pre">FormatChecker</span></code></a>
+whose <code class="xref py py-meth docutils literal"><span class="pre">conforms()</span></code> method will be called to check and see if
+instances conform to each <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.7">format</a> property present
+in the schema. If unprovided, no validation will be done for
+<a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.7">format</a>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="jsonschema.IValidator.DEFAULT_TYPES">
+<code class="descname">DEFAULT_TYPES</code><a class="headerlink" href="#jsonschema.IValidator.DEFAULT_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default mapping of JSON types to Python types used when validating
+<a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5">type</a> properties in JSON schemas.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.IValidator.META_SCHEMA">
+<code class="descname">META_SCHEMA</code><a class="headerlink" href="#jsonschema.IValidator.META_SCHEMA" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object representing the validator&#8217;s meta schema (the schema that
+describes valid schemas in the given version).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.IValidator.VALIDATORS">
+<code class="descname">VALIDATORS</code><a class="headerlink" href="#jsonschema.IValidator.VALIDATORS" title="Permalink to this definition">¶</a></dt>
+<dd><p>A mapping of validator names (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>s) to functions
+that validate the validator property with that name. For more
+information see <a class="reference internal" href="creating.html#creating-validators"><span>Creating or Extending Validator Classes</span></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="jsonschema.IValidator.schema">
+<code class="descname">schema</code><a class="headerlink" href="#jsonschema.IValidator.schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>The schema that was passed in when initializing the object.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="jsonschema.IValidator.check_schema">
+<em class="property">classmethod </em><code class="descname">check_schema</code><span class="sig-paren">(</span><em>schema</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.IValidator.check_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate the given schema against the validator&#8217;s <a class="reference internal" href="#jsonschema.IValidator.META_SCHEMA" title="jsonschema.IValidator.META_SCHEMA"><code class="xref py py-attr docutils literal"><span class="pre">META_SCHEMA</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">SchemaError</span></code> if the schema is invalid</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.IValidator.is_type">
+<code class="descname">is_type</code><span class="sig-paren">(</span><em>instance</em>, <em>type</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.IValidator.is_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the instance is of the given (JSON Schema) type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">UnknownType</span></code> if <code class="docutils literal"><span class="pre">type</span></code> is not a known type.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.IValidator.is_valid">
+<code class="descname">is_valid</code><span class="sig-paren">(</span><em>instance</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.IValidator.is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the instance is valid under the current <a class="reference internal" href="#jsonschema.IValidator.schema" title="jsonschema.IValidator.schema"><code class="xref py py-attr docutils literal"><span class="pre">schema</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;maxItems&quot;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Draft3Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">is_valid</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.IValidator.iter_errors">
+<code class="descname">iter_errors</code><span class="sig-paren">(</span><em>instance</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.IValidator.iter_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lazily yield each of the validation errors in the given instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">an iterable of <code class="xref py py-exc docutils literal"><span class="pre">ValidationError</span></code>s<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s">&quot;type&quot;</span> <span class="p">:</span> <span class="s">&quot;array&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&quot;items&quot;</span> <span class="p">:</span> <span class="p">{</span><span class="s">&quot;enum&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]},</span>
+<span class="gp">... </span>    <span class="s">&quot;maxItems&quot;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">Draft3Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]),</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+<span class="go">4 is not one of [1, 2, 3]</span>
+<span class="go">[2, 3, 4] is too long</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.IValidator.validate">
+<code class="descname">validate</code><span class="sig-paren">(</span><em>instance</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.IValidator.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the instance is valid under the current <a class="reference internal" href="#jsonschema.IValidator.schema" title="jsonschema.IValidator.schema"><code class="xref py py-attr docutils literal"><span class="pre">schema</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><code class="xref py py-exc docutils literal"><span class="pre">ValidationError</span></code> if the instance is invalid</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;maxItems&quot;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Draft3Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">ValidationError</span>: <span class="n">[2, 3, 4] is too long</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<p>All of the <a class="reference internal" href="#versioned-validators"><span>versioned validators</span></a> that
+are included with <a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a> adhere to the interface, and
+implementors of validator classes that extend or complement the
+ones included should adhere to it as well. For more information see
+<a class="reference internal" href="creating.html#creating-validators"><span>Creating or Extending Validator Classes</span></a>.</p>
+<div class="section" id="validating-with-additional-types">
+<span id="validating-types"></span><h3>Validating With Additional Types<a class="headerlink" href="#validating-with-additional-types" title="Permalink to this headline">¶</a></h3>
+<p>Occasionally it can be useful to provide additional or alternate types when
+validating the JSON Schema&#8217;s <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.5.5">type</a> property. Validators allow this
+by taking a <code class="docutils literal"><span class="pre">types</span></code> argument on construction that specifies additional types,
+or which can be used to specify a different set of Python types to map to a
+given JSON type.</p>
+<p><a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a> tries to strike a balance between performance in the common
+case and generality. For instance, JSON Schema defines a <code class="docutils literal"><span class="pre">number</span></code> type, which
+can be validated with a schema such as <code class="docutils literal"><span class="pre">{&quot;type&quot;</span> <span class="pre">:</span> <span class="pre">&quot;number&quot;}</span></code>. By default,
+this will accept instances of Python <a class="reference external" href="http://docs.python.org/2.7/library/numbers.html#numbers.Number" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">numbers.Number</span></code></a>. This includes in
+particular <a class="reference external" href="http://docs.python.org/2.7/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">int</span></code></a>s and <a class="reference external" href="http://docs.python.org/2.7/library/functions.html#float" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">float</span></code></a>s, along with
+<a class="reference external" href="http://docs.python.org/2.7/library/decimal.html#decimal.Decimal" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">decimal.Decimal</span></code></a> objects, <a class="reference external" href="http://docs.python.org/2.7/library/functions.html#complex" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">complex</span></code></a> numbers etc. For
+<code class="docutils literal"><span class="pre">integer</span></code> and <code class="docutils literal"><span class="pre">object</span></code>, however, rather than checking for
+<a class="reference external" href="http://docs.python.org/2.7/library/numbers.html#numbers.Integral" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">numbers.Integral</span></code></a> and <code class="xref py py-class docutils literal"><span class="pre">collections.abc.Mapping</span></code>,
+<a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a> simply checks for <a class="reference external" href="http://docs.python.org/2.7/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">int</span></code></a> and <a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a>, since the
+more general instance checks can introduce significant slowdown, especially
+given how common validating these types are.</p>
+<p>If you <em>do</em> want the generality, or just want to add a few specific additional
+types as being acceptible for a validator object, <a class="reference internal" href="#jsonschema.IValidator" title="jsonschema.IValidator"><code class="xref py py-class docutils literal"><span class="pre">IValidator</span></code></a>s have a
+<code class="docutils literal"><span class="pre">types</span></code> argument that can be used to provide additional or new types.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyInteger</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">Draft3Validator</span><span class="p">(</span>
+    <span class="n">schema</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;type&quot;</span> <span class="p">:</span> <span class="s">&quot;number&quot;</span><span class="p">},</span>
+    <span class="n">types</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;number&quot;</span> <span class="p">:</span> <span class="p">(</span><span class="n">numbers</span><span class="o">.</span><span class="n">Number</span><span class="p">,</span> <span class="n">MyInteger</span><span class="p">)},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The list of default Python types for each JSON type is available on each
+validator object in the <a class="reference internal" href="#jsonschema.IValidator.DEFAULT_TYPES" title="jsonschema.IValidator.DEFAULT_TYPES"><code class="xref py py-attr docutils literal"><span class="pre">IValidator.DEFAULT_TYPES</span></code></a> attribute. Note
+that you need to specify all types to match if you override one of the
+existing JSON types, so you may want to access the set of default types
+when specifying your additional type.</p>
+</div>
+</div>
+<div class="section" id="versioned-validators">
+<span id="id4"></span><h2>Versioned Validators<a class="headerlink" href="#versioned-validators" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a> ships with validator classes for various versions of
+the JSON Schema specification. For details on the methods and attributes
+that each validator class provides see the <a class="reference internal" href="#jsonschema.IValidator" title="jsonschema.IValidator"><code class="xref py py-class docutils literal"><span class="pre">IValidator</span></code></a> interface,
+which each included validator class implements.</p>
+<dl class="class">
+<dt id="jsonschema.Draft3Validator">
+<em class="property">class </em><code class="descclassname">jsonschema.</code><code class="descname">Draft3Validator</code><span class="sig-paren">(</span><em>schema</em>, <em>types=()</em>, <em>resolver=None</em>, <em>format_checker=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.Draft3Validator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="jsonschema.Draft4Validator">
+<em class="property">class </em><code class="descclassname">jsonschema.</code><code class="descname">Draft4Validator</code><span class="sig-paren">(</span><em>schema</em>, <em>types=()</em>, <em>resolver=None</em>, <em>format_checker=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.Draft4Validator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>For example, if you wanted to validate a schema you created against the
+Draft 4 meta-schema, you could use:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">Draft4Validator</span>
+
+<span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;$schema&quot;</span><span class="p">:</span> <span class="s">&quot;http://json-schema.org/schema#&quot;</span><span class="p">,</span>
+
+    <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;object&quot;</span><span class="p">,</span>
+    <span class="s">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;string&quot;</span><span class="p">},</span>
+        <span class="s">&quot;email&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;string&quot;</span><span class="p">},</span>
+    <span class="p">},</span>
+    <span class="s">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;email&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="n">Draft4Validator</span><span class="o">.</span><span class="n">check_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="validating-formats">
+<h2>Validating Formats<a class="headerlink" href="#validating-formats" title="Permalink to this headline">¶</a></h2>
+<p>JSON Schema defines the <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.7">format</a> property which can be used to check
+if primitive types (<code class="docutils literal"><span class="pre">string</span></code>s, <code class="docutils literal"><span class="pre">number</span></code>s, <code class="docutils literal"><span class="pre">boolean</span></code>s) conform to
+well-defined formats. By default, no validation is enforced, but optionally,
+validation can be enabled by hooking in a format-checking object into an
+<a class="reference internal" href="#jsonschema.IValidator" title="jsonschema.IValidator"><code class="xref py py-class docutils literal"><span class="pre">IValidator</span></code></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">validate</span><span class="p">(</span><span class="s">&quot;localhost&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s">&quot;format&quot;</span> <span class="p">:</span> <span class="s">&quot;hostname&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s">&quot;-12&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s">&quot;format&quot;</span> <span class="p">:</span> <span class="s">&quot;hostname&quot;</span><span class="p">},</span> <span class="n">format_checker</span><span class="o">=</span><span class="n">FormatChecker</span><span class="p">(),</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">ValidationError</span>: <span class="n">&quot;-12&quot; is not a &quot;hostname&quot;</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="jsonschema.FormatChecker">
+<em class="property">class </em><code class="descclassname">jsonschema.</code><code class="descname">FormatChecker</code><span class="sig-paren">(</span><em>formats=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/_format.html#FormatChecker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.FormatChecker" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <code class="docutils literal"><span class="pre">format</span></code> property checker.</p>
+<p>JSON Schema does not mandate that the <code class="docutils literal"><span class="pre">format</span></code> property actually do any
+validation. If validation is desired however, instances of this class can
+be hooked into validators to enable format validation.</p>
+<p><a class="reference internal" href="#jsonschema.FormatChecker" title="jsonschema.FormatChecker"><code class="xref py py-class docutils literal"><span class="pre">FormatChecker</span></code></a> objects always return <code class="docutils literal"><span class="pre">True</span></code> when asked about
+formats that they do not know how to validate.</p>
+<p>To check a custom format using a function that takes an instance and
+returns a <code class="docutils literal"><span class="pre">bool</span></code>, use the <a class="reference internal" href="#jsonschema.FormatChecker.checks" title="jsonschema.FormatChecker.checks"><code class="xref py py-meth docutils literal"><span class="pre">FormatChecker.checks()</span></code></a> or
+<a class="reference internal" href="#jsonschema.FormatChecker.cls_checks" title="jsonschema.FormatChecker.cls_checks"><code class="xref py py-meth docutils literal"><span class="pre">FormatChecker.cls_checks()</span></code></a> decorators.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>formats</strong> (<em>iterable</em>) &#8211; the known formats to validate. This argument
+can be used to limit which formats will be used
+during validation.</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="jsonschema.FormatChecker.checkers">
+<code class="descname">checkers</code><a class="headerlink" href="#jsonschema.FormatChecker.checkers" title="Permalink to this definition">¶</a></dt>
+<dd><p>A mapping of currently known formats to tuple of functions that
+validate them and errors that should be caught. New checkers can be
+added and removed either per-instance or globally for all checkers
+using the <a class="reference internal" href="#jsonschema.FormatChecker.checks" title="jsonschema.FormatChecker.checks"><code class="xref py py-meth docutils literal"><span class="pre">FormatChecker.checks()</span></code></a> or
+<a class="reference internal" href="#jsonschema.FormatChecker.cls_checks" title="jsonschema.FormatChecker.cls_checks"><code class="xref py py-meth docutils literal"><span class="pre">FormatChecker.cls_checks()</span></code></a> decorators respectively.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="jsonschema.FormatChecker.cls_checks">
+<em class="property">classmethod </em><code class="descname">cls_checks</code><span class="sig-paren">(</span><em>format</em>, <em>raises=()</em><span class="sig-paren">)</span><a class="headerlink" href="#jsonschema.FormatChecker.cls_checks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a decorated function as <em>globally</em> validating a new format.</p>
+<p>Any instance created after this function is called will pick up the
+supplied checker.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>format</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; the format that the decorated function will check</li>
+<li><strong>raises</strong> (<em>Exception</em>) &#8211; the exception(s) raised by the decorated
+function when an invalid instance is found. The exception object
+will be accessible as the <code class="xref py py-attr docutils literal"><span class="pre">ValidationError.cause</span></code> attribute
+of the resulting validation error.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.FormatChecker.check">
+<code class="descname">check</code><span class="sig-paren">(</span><em>instance</em>, <em>format</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/_format.html#FormatChecker.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.FormatChecker.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether the instance conforms to the given format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>instance</strong> &#8211; the instance to check</li>
+<li><strong>format</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; the format that instance should conform to</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body"><p class="first">any primitive type (str, number, bool)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">FormatError</span></code> if instance does not conform to format</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.FormatChecker.checks">
+<code class="descname">checks</code><span class="sig-paren">(</span><em>format</em>, <em>raises=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/_format.html#FormatChecker.checks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.FormatChecker.checks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a decorated function as validating a new format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>format</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; the format that the decorated function will check</li>
+<li><strong>raises</strong> (<em>Exception</em>) &#8211; the exception(s) raised by the decorated
+function when an invalid instance is found. The exception object
+will be accessible as the <code class="xref py py-attr docutils literal"><span class="pre">ValidationError.cause</span></code> attribute
+of the resulting validation error.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.FormatChecker.conforms">
+<code class="descname">conforms</code><span class="sig-paren">(</span><em>instance</em>, <em>format</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/_format.html#FormatChecker.conforms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.FormatChecker.conforms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether the instance conforms to the given format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>instance</strong> &#8211; the instance to check</li>
+<li><strong>format</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; the format that instance should conform to</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body"><p class="first">any primitive type (str, number, bool)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<p>There are a number of default checkers that <a class="reference internal" href="#jsonschema.FormatChecker" title="jsonschema.FormatChecker"><code class="xref py py-class docutils literal"><span class="pre">FormatChecker</span></code></a>s know how
+to validate. Their names can be viewed by inspecting the
+<a class="reference internal" href="#jsonschema.FormatChecker.checkers" title="jsonschema.FormatChecker.checkers"><code class="xref py py-attr docutils literal"><span class="pre">FormatChecker.checkers</span></code></a> attribute. Certain checkers will only be
+available if an appropriate package is available for use. The available
+checkers, along with their requirement (if any,) are listed below.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="18%" />
+<col width="82%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Checker</th>
+<th class="head">Notes</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>hostname</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>ipv4</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>ipv6</td>
+<td>OS must have <a class="reference external" href="http://docs.python.org/2.7/library/socket.html#socket.inet_pton" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">socket.inet_pton()</span></code></a> function</td>
+</tr>
+<tr class="row-odd"><td>email</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>uri</td>
+<td>requires <a class="reference external" href="http://pypi.python.org/pypi/rfc3987/">rfc3987</a></td>
+</tr>
+<tr class="row-odd"><td>date-time</td>
+<td>requires <a class="reference external" href="http://pypi.python.org/pypi/strict-rfc3339/">strict-rfc3339</a> <a class="footnote-reference" href="#id3" id="id5">[2]</a></td>
+</tr>
+<tr class="row-even"><td>date</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>time</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>regex</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>color</td>
+<td>requires <a class="reference external" href="http://pypi.python.org/pypi/webcolors/">webcolors</a></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[3]</td><td>For backwards compatibility, <a class="reference external" href="http://pypi.python.org/pypi/isodate/">isodate</a> is also supported, but it will
+allow any <a class="reference external" href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> date-time,
+not just <a class="reference external" href="http://www.ietf.org/rfc/rfc3339.txt">RFC 3339</a> as mandated by
+the JSON Schema specification.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Schema Validation</a><ul>
+<li><a class="reference internal" href="#the-basics">The Basics</a></li>
+<li><a class="reference internal" href="#the-validator-interface">The Validator Interface</a><ul>
+<li><a class="reference internal" href="#validating-with-additional-types">Validating With Additional Types</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#versioned-validators">Versioned Validators</a></li>
+<li><a class="reference internal" href="#validating-formats">Validating Formats</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">jsonschema</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="errors.html"
+                        title="next chapter">Handling Validation Errors</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="errors.html" title="Handling Validation Errors"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="jsonschema"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Julian Berman.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

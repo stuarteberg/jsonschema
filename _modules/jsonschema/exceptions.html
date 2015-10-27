@@ -1,0 +1,375 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jsonschema.exceptions &mdash; jsonschema 2.5.1.post12 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.5.1.post12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="../../_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for jsonschema.exceptions</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">pprint</span>
+<span class="kn">import</span> <span class="nn">textwrap</span>
+
+<span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">_utils</span>
+<span class="kn">from</span> <span class="nn">jsonschema.compat</span> <span class="kn">import</span> <span class="n">PY3</span><span class="p">,</span> <span class="n">iteritems</span>
+
+
+<span class="n">WEAK_MATCHES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s">&quot;anyOf&quot;</span><span class="p">,</span> <span class="s">&quot;oneOf&quot;</span><span class="p">])</span>
+<span class="n">STRONG_MATCHES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
+<span class="n">_unset</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">Unset</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">_Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">,</span>
+        <span class="n">validator</span><span class="o">=</span><span class="n">_unset</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="p">(),</span>
+        <span class="n">cause</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">=</span><span class="p">(),</span>
+        <span class="n">validator_value</span><span class="o">=</span><span class="n">_unset</span><span class="p">,</span>
+        <span class="n">instance</span><span class="o">=</span><span class="n">_unset</span><span class="p">,</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">_unset</span><span class="p">,</span>
+        <span class="n">schema_path</span><span class="o">=</span><span class="p">(),</span>
+        <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">_Error</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
+            <span class="n">message</span><span class="p">,</span>
+            <span class="n">validator</span><span class="p">,</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">cause</span><span class="p">,</span>
+            <span class="n">context</span><span class="p">,</span>
+            <span class="n">validator_value</span><span class="p">,</span>
+            <span class="n">instance</span><span class="p">,</span>
+            <span class="n">schema</span><span class="p">,</span>
+            <span class="n">schema_path</span><span class="p">,</span>
+            <span class="n">parent</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schema_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_schema_path</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">schema_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cause</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="n">cause</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validator</span> <span class="o">=</span> <span class="n">validator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validator_value</span> <span class="o">=</span> <span class="n">validator_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+
+        <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">context</span><span class="p">:</span>
+            <span class="n">error</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;&lt;</span><span class="si">%s</span><span class="s">: </span><span class="si">%r</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">unicode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">essential_for_verbose</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">validator_value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">m</span> <span class="ow">is</span> <span class="n">_unset</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">essential_for_verbose</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
+
+        <span class="n">pschema</span> <span class="o">=</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">72</span><span class="p">)</span>
+        <span class="n">pinstance</span> <span class="o">=</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">72</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+
+<span class="s">            Failed validating </span><span class="si">%r</span><span class="s"> in schema</span><span class="si">%s</span><span class="s">:</span>
+<span class="s">            </span><span class="si">%s</span><span class="s"></span>
+
+<span class="s">            On instance</span><span class="si">%s</span><span class="s">:</span>
+<span class="s">            </span><span class="si">%s</span><span class="s"></span>
+<span class="s">            &quot;&quot;&quot;</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+        <span class="p">)</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">,</span>
+            <span class="n">_utils</span><span class="o">.</span><span class="n">format_as_index</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_schema_path</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">_utils</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">pschema</span><span class="p">),</span>
+            <span class="n">_utils</span><span class="o">.</span><span class="n">format_as_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">),</span>
+            <span class="n">_utils</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">pinstance</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">PY3</span><span class="p">:</span>
+        <span class="n">__str__</span> <span class="o">=</span> <span class="n">__unicode__</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">create_from</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="o">**</span><span class="n">other</span><span class="o">.</span><span class="n">_contents</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">absolute_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">extendleft</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">absolute_schema_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_schema_path</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_schema_path</span><span class="p">)</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">extendleft</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">absolute_schema_path</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">def</span> <span class="nf">_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="ow">is</span> <span class="n">_unset</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_contents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s">&quot;message&quot;</span><span class="p">,</span> <span class="s">&quot;cause&quot;</span><span class="p">,</span> <span class="s">&quot;context&quot;</span><span class="p">,</span> <span class="s">&quot;validator&quot;</span><span class="p">,</span> <span class="s">&quot;validator_value&quot;</span><span class="p">,</span>
+            <span class="s">&quot;path&quot;</span><span class="p">,</span> <span class="s">&quot;schema_path&quot;</span><span class="p">,</span> <span class="s">&quot;instance&quot;</span><span class="p">,</span> <span class="s">&quot;schema&quot;</span><span class="p">,</span> <span class="s">&quot;parent&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">((</span><span class="n">attr</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span> <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ValidationError"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.ValidationError">[docs]</a><span class="k">class</span> <span class="nc">ValidationError</span><span class="p">(</span><span class="n">_Error</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="SchemaError"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.SchemaError">[docs]</a><span class="k">class</span> <span class="nc">SchemaError</span><span class="p">(</span><span class="n">_Error</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="RefResolutionError"><a class="viewcode-back" href="../../references.html#jsonschema.exceptions.RefResolutionError">[docs]</a><span class="k">class</span> <span class="nc">RefResolutionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+</div>
+<span class="k">class</span> <span class="nc">UnknownType</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">unicode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pschema</span> <span class="o">=</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">72</span><span class="p">)</span>
+        <span class="n">pinstance</span> <span class="o">=</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">72</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">            Unknown type </span><span class="si">%r</span><span class="s"> for validator with schema:</span>
+<span class="s">            </span><span class="si">%s</span><span class="s"></span>
+
+<span class="s">            While checking instance:</span>
+<span class="s">            </span><span class="si">%s</span><span class="s"></span>
+<span class="s">            &quot;&quot;&quot;</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+        <span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">_utils</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">pschema</span><span class="p">),</span> <span class="n">_utils</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">pinstance</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">PY3</span><span class="p">:</span>
+        <span class="n">__str__</span> <span class="o">=</span> <span class="n">__unicode__</span>
+
+
+
+<span class="k">class</span> <span class="nc">FormatError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">cause</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FormatError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">cause</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cause</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="n">cause</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
+
+    <span class="k">if</span> <span class="n">PY3</span><span class="p">:</span>
+        <span class="n">__str__</span> <span class="o">=</span> <span class="n">__unicode__</span>
+
+
+<div class="viewcode-block" id="ErrorTree"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.ErrorTree">[docs]</a><span class="k">class</span> <span class="nc">ErrorTree</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ErrorTrees make it easier to check which validations failed.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_instance</span> <span class="o">=</span> <span class="n">_unset</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="p">()):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contents</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+            <span class="n">container</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">error</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+                <span class="n">container</span> <span class="o">=</span> <span class="n">container</span><span class="p">[</span><span class="n">element</span><span class="p">]</span>
+            <span class="n">container</span><span class="o">.</span><span class="n">errors</span><span class="p">[</span><span class="n">error</span><span class="o">.</span><span class="n">validator</span><span class="p">]</span> <span class="o">=</span> <span class="n">error</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_instance</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">instance</span>
+
+<div class="viewcode-block" id="ErrorTree.__contains__"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.ErrorTree.__contains__">[docs]</a>    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether ``instance[index]`` has any errors.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contents</span>
+</div>
+<div class="viewcode-block" id="ErrorTree.__getitem__"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.ErrorTree.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the child tree one level down at the given ``index``.</span>
+
+<span class="sd">        If the index is not in the instance that this tree corresponds to and</span>
+<span class="sd">        is not known by this tree, whatever error would be raised by</span>
+<span class="sd">        ``instance.__getitem__`` will be propagated (usually this is some</span>
+<span class="sd">        subclass of :class:`LookupError`.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_unset</span> <span class="ow">and</span> <span class="n">index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_instance</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contents</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+</div>
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contents</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="ErrorTree.__iter__"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.ErrorTree.__iter__">[docs]</a>    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate (non-recursively) over the indices in the instance with errors.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contents</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ErrorTree.__len__"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.ErrorTree.__len__">[docs]</a>    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Same as :attr:`total_errors`.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_errors</span>
+</div>
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;&lt;</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s"> total errors)&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">total_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The total number of errors in the entire tree, including children.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">child_errors</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contents</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span> <span class="o">+</span> <span class="n">child_errors</span>
+
+</div>
+<div class="viewcode-block" id="by_relevance"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.by_relevance">[docs]</a><span class="k">def</span> <span class="nf">by_relevance</span><span class="p">(</span><span class="n">weak</span><span class="o">=</span><span class="n">WEAK_MATCHES</span><span class="p">,</span> <span class="n">strong</span><span class="o">=</span><span class="n">STRONG_MATCHES</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">relevance</span><span class="p">(</span><span class="n">error</span><span class="p">):</span>
+        <span class="n">validator</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">validator</span>
+        <span class="k">return</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">path</span><span class="p">),</span> <span class="n">validator</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">weak</span><span class="p">,</span> <span class="n">validator</span> <span class="ow">in</span> <span class="n">strong</span>
+    <span class="k">return</span> <span class="n">relevance</span>
+
+</div>
+<span class="n">relevance</span> <span class="o">=</span> <span class="n">by_relevance</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="best_match"><a class="viewcode-back" href="../../errors.html#jsonschema.exceptions.best_match">[docs]</a><span class="k">def</span> <span class="nf">best_match</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">relevance</span><span class="p">):</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">best</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">([</span><span class="n">best</span><span class="p">],</span> <span class="n">errors</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">best</span><span class="o">.</span><span class="n">context</span><span class="p">:</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">context</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">best</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Julian Berman.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

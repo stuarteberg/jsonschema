@@ -1,0 +1,577 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jsonschema.validators &mdash; jsonschema 2.5.1.post12 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.5.1.post12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="../../_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for jsonschema.validators</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numbers</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">requests</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">requests</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">_utils</span><span class="p">,</span> <span class="n">_validators</span>
+<span class="kn">from</span> <span class="nn">jsonschema.compat</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Sequence</span><span class="p">,</span> <span class="n">urljoin</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">urldefrag</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">urlopen</span><span class="p">,</span>
+    <span class="n">str_types</span><span class="p">,</span> <span class="n">int_types</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">lru_cache</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">jsonschema.exceptions</span> <span class="kn">import</span> <span class="n">ErrorTree</span>  <span class="c"># Backwards compatibility  # noqa</span>
+<span class="kn">from</span> <span class="nn">jsonschema.exceptions</span> <span class="kn">import</span> <span class="n">RefResolutionError</span><span class="p">,</span> <span class="n">SchemaError</span><span class="p">,</span> <span class="n">UnknownType</span>
+
+
+<span class="n">_unset</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">Unset</span><span class="p">()</span>
+
+<span class="n">validators</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">meta_schemas</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">URIDict</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="validates"><a class="viewcode-back" href="../../creating.html#jsonschema.validators.validates">[docs]</a><span class="k">def</span> <span class="nf">validates</span><span class="p">(</span><span class="n">version</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Register the decorated validator for a ``version`` of the specification.</span>
+
+<span class="sd">    Registered validators and their meta schemas will be considered when</span>
+<span class="sd">    parsing ``$schema`` properties&#39; URIs.</span>
+
+<span class="sd">    :argument str version: an identifier to use as the version&#39;s name</span>
+<span class="sd">    :returns: a class decorator to decorate the validator with the version</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_validates</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">validators</span><span class="p">[</span><span class="n">version</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span>
+        <span class="k">if</span> <span class="s">u&quot;id&quot;</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">META_SCHEMA</span><span class="p">:</span>
+            <span class="n">meta_schemas</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">META_SCHEMA</span><span class="p">[</span><span class="s">u&quot;id&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">cls</span>
+        <span class="k">return</span> <span class="n">cls</span>
+    <span class="k">return</span> <span class="n">_validates</span>
+
+</div>
+<div class="viewcode-block" id="create"><a class="viewcode-back" href="../../creating.html#jsonschema.validators.create">[docs]</a><span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">meta_schema</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">(),</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">default_types</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>  <span class="c"># noqa</span>
+    <span class="k">if</span> <span class="n">default_types</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">default_types</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">u&quot;array&quot;</span> <span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="s">u&quot;boolean&quot;</span> <span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="s">u&quot;integer&quot;</span> <span class="p">:</span> <span class="n">int_types</span><span class="p">,</span>
+            <span class="s">u&quot;null&quot;</span> <span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">None</span><span class="p">),</span> <span class="s">u&quot;number&quot;</span> <span class="p">:</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Number</span><span class="p">,</span> <span class="s">u&quot;object&quot;</span> <span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+            <span class="s">u&quot;string&quot;</span> <span class="p">:</span> <span class="n">str_types</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Validator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="n">VALIDATORS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">validators</span><span class="p">)</span>
+        <span class="n">META_SCHEMA</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">meta_schema</span><span class="p">)</span>
+        <span class="n">DEFAULT_TYPES</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">default_types</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="p">(),</span> <span class="n">resolver</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">format_checker</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_types</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_TYPES</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">types</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">resolver</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">resolver</span> <span class="o">=</span> <span class="n">RefResolver</span><span class="o">.</span><span class="n">from_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span> <span class="o">=</span> <span class="n">resolver</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">format_checker</span> <span class="o">=</span> <span class="n">format_checker</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span>
+
+        <span class="nd">@classmethod</span>
+        <span class="k">def</span> <span class="nf">check_schema</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">cls</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">META_SCHEMA</span><span class="p">)</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SchemaError</span><span class="o">.</span><span class="n">create_from</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">iter_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">_schema</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_schema</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span>
+
+            <span class="n">scope</span> <span class="o">=</span> <span class="n">_schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">u&quot;id&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">scope</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">push_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ref</span> <span class="o">=</span> <span class="n">_schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">u&quot;$ref&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">validators</span> <span class="o">=</span> <span class="p">[(</span><span class="s">u&quot;$ref&quot;</span><span class="p">,</span> <span class="n">ref</span><span class="p">)]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">validators</span> <span class="o">=</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">_schema</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">validators</span><span class="p">:</span>
+                    <span class="n">validator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALIDATORS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">validator</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">errors</span> <span class="o">=</span> <span class="n">validator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">_schema</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()</span>
+                    <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+                        <span class="c"># set details if not already set by the called fn</span>
+                        <span class="n">error</span><span class="o">.</span><span class="n">_set</span><span class="p">(</span>
+                            <span class="n">validator</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                            <span class="n">validator_value</span><span class="o">=</span><span class="n">v</span><span class="p">,</span>
+                            <span class="n">instance</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
+                            <span class="n">schema</span><span class="o">=</span><span class="n">_schema</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s">u&quot;$ref&quot;</span><span class="p">:</span>
+                            <span class="n">error</span><span class="o">.</span><span class="n">schema_path</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                        <span class="k">yield</span> <span class="n">error</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">scope</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">resolver</span><span class="o">.</span><span class="n">pop_scope</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">descend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">schema_path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">error</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">schema_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">error</span><span class="o">.</span><span class="n">schema_path</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">schema_path</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">error</span>
+
+        <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">error</span>
+
+        <span class="k">def</span> <span class="nf">is_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnknownType</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+            <span class="n">pytypes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span>
+
+            <span class="c"># bool inherits from int, so ensure bools aren&#39;t reported as ints</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                <span class="n">pytypes</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">pytypes</span><span class="p">)</span>
+                <span class="n">is_number</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="nb">issubclass</span><span class="p">(</span><span class="n">pytype</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Number</span><span class="p">)</span> <span class="k">for</span> <span class="n">pytype</span> <span class="ow">in</span> <span class="n">pytypes</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_number</span> <span class="ow">and</span> <span class="nb">bool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pytypes</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">pytypes</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">_schema</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">_schema</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">error</span> <span class="ow">is</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">Validator</span> <span class="o">=</span> <span class="n">validates</span><span class="p">(</span><span class="n">version</span><span class="p">)(</span><span class="n">Validator</span><span class="p">)</span>
+        <span class="n">Validator</span><span class="o">.</span><span class="n">__name__</span> <span class="o">=</span> <span class="n">version</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;Validator&quot;</span>
+
+    <span class="k">return</span> <span class="n">Validator</span>
+
+</div>
+<div class="viewcode-block" id="extend"><a class="viewcode-back" href="../../creating.html#jsonschema.validators.extend">[docs]</a><span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="n">validator</span><span class="p">,</span> <span class="n">validators</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">all_validators</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">validator</span><span class="o">.</span><span class="n">VALIDATORS</span><span class="p">)</span>
+    <span class="n">all_validators</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">validators</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">create</span><span class="p">(</span>
+        <span class="n">meta_schema</span><span class="o">=</span><span class="n">validator</span><span class="o">.</span><span class="n">META_SCHEMA</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="n">all_validators</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+        <span class="n">default_types</span><span class="o">=</span><span class="n">validator</span><span class="o">.</span><span class="n">DEFAULT_TYPES</span><span class="p">,</span>
+    <span class="p">)</span>
+
+</div>
+<span class="n">Draft3Validator</span> <span class="o">=</span> <span class="n">create</span><span class="p">(</span>
+    <span class="n">meta_schema</span><span class="o">=</span><span class="n">_utils</span><span class="o">.</span><span class="n">load_schema</span><span class="p">(</span><span class="s">&quot;draft3&quot;</span><span class="p">),</span>
+    <span class="n">validators</span><span class="o">=</span><span class="p">{</span>
+        <span class="s">u&quot;$ref&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">ref</span><span class="p">,</span>
+        <span class="s">u&quot;additionalItems&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">additionalItems</span><span class="p">,</span>
+        <span class="s">u&quot;additionalProperties&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">additionalProperties</span><span class="p">,</span>
+        <span class="s">u&quot;dependencies&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">dependencies</span><span class="p">,</span>
+        <span class="s">u&quot;disallow&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">disallow_draft3</span><span class="p">,</span>
+        <span class="s">u&quot;divisibleBy&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">multipleOf</span><span class="p">,</span>
+        <span class="s">u&quot;enum&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">enum</span><span class="p">,</span>
+        <span class="s">u&quot;extends&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">extends_draft3</span><span class="p">,</span>
+        <span class="s">u&quot;format&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">format</span><span class="p">,</span>
+        <span class="s">u&quot;items&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">items</span><span class="p">,</span>
+        <span class="s">u&quot;maxItems&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">maxItems</span><span class="p">,</span>
+        <span class="s">u&quot;maxLength&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">maxLength</span><span class="p">,</span>
+        <span class="s">u&quot;maximum&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">maximum</span><span class="p">,</span>
+        <span class="s">u&quot;minItems&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">minItems</span><span class="p">,</span>
+        <span class="s">u&quot;minLength&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">minLength</span><span class="p">,</span>
+        <span class="s">u&quot;minimum&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">minimum</span><span class="p">,</span>
+        <span class="s">u&quot;multipleOf&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">multipleOf</span><span class="p">,</span>
+        <span class="s">u&quot;pattern&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span>
+        <span class="s">u&quot;patternProperties&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">patternProperties</span><span class="p">,</span>
+        <span class="s">u&quot;properties&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">properties_draft3</span><span class="p">,</span>
+        <span class="s">u&quot;type&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">type_draft3</span><span class="p">,</span>
+        <span class="s">u&quot;uniqueItems&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">uniqueItems</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">version</span><span class="o">=</span><span class="s">&quot;draft3&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">Draft4Validator</span> <span class="o">=</span> <span class="n">create</span><span class="p">(</span>
+    <span class="n">meta_schema</span><span class="o">=</span><span class="n">_utils</span><span class="o">.</span><span class="n">load_schema</span><span class="p">(</span><span class="s">&quot;draft4&quot;</span><span class="p">),</span>
+    <span class="n">validators</span><span class="o">=</span><span class="p">{</span>
+        <span class="s">u&quot;$ref&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">ref</span><span class="p">,</span>
+        <span class="s">u&quot;additionalItems&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">additionalItems</span><span class="p">,</span>
+        <span class="s">u&quot;additionalProperties&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">additionalProperties</span><span class="p">,</span>
+        <span class="s">u&quot;allOf&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">allOf_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;anyOf&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">anyOf_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;dependencies&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">dependencies</span><span class="p">,</span>
+        <span class="s">u&quot;enum&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">enum</span><span class="p">,</span>
+        <span class="s">u&quot;format&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">format</span><span class="p">,</span>
+        <span class="s">u&quot;items&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">items</span><span class="p">,</span>
+        <span class="s">u&quot;maxItems&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">maxItems</span><span class="p">,</span>
+        <span class="s">u&quot;maxLength&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">maxLength</span><span class="p">,</span>
+        <span class="s">u&quot;maxProperties&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">maxProperties_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;maximum&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">maximum</span><span class="p">,</span>
+        <span class="s">u&quot;minItems&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">minItems</span><span class="p">,</span>
+        <span class="s">u&quot;minLength&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">minLength</span><span class="p">,</span>
+        <span class="s">u&quot;minProperties&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">minProperties_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;minimum&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">minimum</span><span class="p">,</span>
+        <span class="s">u&quot;multipleOf&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">multipleOf</span><span class="p">,</span>
+        <span class="s">u&quot;not&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">not_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;oneOf&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">oneOf_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;pattern&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span>
+        <span class="s">u&quot;patternProperties&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">patternProperties</span><span class="p">,</span>
+        <span class="s">u&quot;properties&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">properties_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;required&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">required_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;type&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">type_draft4</span><span class="p">,</span>
+        <span class="s">u&quot;uniqueItems&quot;</span> <span class="p">:</span> <span class="n">_validators</span><span class="o">.</span><span class="n">uniqueItems</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">version</span><span class="o">=</span><span class="s">&quot;draft4&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="RefResolver"><a class="viewcode-back" href="../../references.html#jsonschema.validators.RefResolver">[docs]</a><span class="k">class</span> <span class="nc">RefResolver</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resolve JSON References.</span>
+
+<span class="sd">    :argument str base_uri: URI of the referring document</span>
+<span class="sd">    :argument referrer: the actual referring document</span>
+<span class="sd">    :argument dict store: a mapping from URIs to documents to cache</span>
+<span class="sd">    :argument bool cache_remote: whether remote refs should be cached after</span>
+<span class="sd">        first resolution</span>
+<span class="sd">    :argument dict handlers: a mapping from URI schemes to functions that</span>
+<span class="sd">        should be used to retrieve them</span>
+<span class="sd">    :arguments functools.lru_cache urljoin_cache: a cache that will be used for</span>
+<span class="sd">        caching the results of joining the resolution scope to subscopes.</span>
+<span class="sd">    :arguments functools.lru_cache remote_cache: a cache that will be used for</span>
+<span class="sd">        caching the results of resolved remote URLs.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_uri</span><span class="p">,</span>
+        <span class="n">referrer</span><span class="p">,</span>
+        <span class="n">store</span><span class="o">=</span><span class="p">(),</span>
+        <span class="n">cache_remote</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+        <span class="n">handlers</span><span class="o">=</span><span class="p">(),</span>
+        <span class="n">urljoin_cache</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">remote_cache</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">urljoin_cache</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">urljoin_cache</span> <span class="o">=</span> <span class="n">lru_cache</span><span class="p">(</span><span class="mi">1024</span><span class="p">)(</span><span class="n">urljoin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">remote_cache</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">remote_cache</span> <span class="o">=</span> <span class="n">lru_cache</span><span class="p">(</span><span class="mi">1024</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve_from_url</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">referrer</span> <span class="o">=</span> <span class="n">referrer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_remote</span> <span class="o">=</span> <span class="n">cache_remote</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">handlers</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scopes_stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">base_uri</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">URIDict</span><span class="p">(</span>
+            <span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">validator</span><span class="o">.</span><span class="n">META_SCHEMA</span><span class="p">)</span>
+            <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">validator</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">meta_schemas</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">[</span><span class="n">base_uri</span><span class="p">]</span> <span class="o">=</span> <span class="n">referrer</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_urljoin_cache</span> <span class="o">=</span> <span class="n">urljoin_cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remote_cache</span> <span class="o">=</span> <span class="n">remote_cache</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="RefResolver.from_schema"><a class="viewcode-back" href="../../references.html#jsonschema.validators.RefResolver.from_schema">[docs]</a>    <span class="k">def</span> <span class="nf">from_schema</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a resolver from a JSON schema object.</span>
+
+<span class="sd">        :argument schema: the referring schema</span>
+<span class="sd">        :rtype: :class:`RefResolver`</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">u&quot;id&quot;</span><span class="p">,</span> <span class="s">u&quot;&quot;</span><span class="p">),</span> <span class="n">schema</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">push_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scopes_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_urljoin_cache</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution_scope</span><span class="p">,</span> <span class="n">scope</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">pop_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scopes_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RefResolutionError</span><span class="p">(</span>
+                <span class="s">&quot;Failed to pop the scope from an empty stack. &quot;</span>
+                <span class="s">&quot;`pop_scope()` should only be called once for every &quot;</span>
+                <span class="s">&quot;`push_scope()`&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resolution_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scopes_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">base_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">uri</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">urldefrag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution_scope</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">uri</span>
+
+    <span class="nd">@contextlib.contextmanager</span>
+    <span class="k">def</span> <span class="nf">in_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">push_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pop_scope</span><span class="p">()</span>
+
+    <span class="nd">@contextlib.contextmanager</span>
+<div class="viewcode-block" id="RefResolver.resolving"><a class="viewcode-back" href="../../references.html#jsonschema.validators.RefResolver.resolving">[docs]</a>    <span class="k">def</span> <span class="nf">resolving</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Context manager which resolves a JSON ``ref`` and enters the</span>
+<span class="sd">        resolution scope of this ref.</span>
+
+<span class="sd">        :argument str ref: reference to resolve</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">url</span><span class="p">,</span> <span class="n">resolved</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">push_scope</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">resolved</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pop_scope</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_urljoin_cache</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution_scope</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_cache</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">resolve_from_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="n">url</span><span class="p">,</span> <span class="n">fragment</span> <span class="o">=</span> <span class="n">urldefrag</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">document</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">[</span><span class="n">url</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">document</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_remote</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RefResolutionError</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_fragment</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">fragment</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RefResolver.resolve_fragment"><a class="viewcode-back" href="../../references.html#jsonschema.validators.RefResolver.resolve_fragment">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_fragment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">,</span> <span class="n">fragment</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve a ``fragment`` within the referenced ``document``.</span>
+
+<span class="sd">        :argument document: the referrant document</span>
+<span class="sd">        :argument str fragment: a URI fragment to resolve within it</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">fragment</span> <span class="o">=</span> <span class="n">fragment</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s">u&quot;/&quot;</span><span class="p">)</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">unquote</span><span class="p">(</span><span class="n">fragment</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">u&quot;/&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">fragment</span> <span class="k">else</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+            <span class="n">part</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">u&quot;~1&quot;</span><span class="p">,</span> <span class="s">u&quot;/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">u&quot;~0&quot;</span><span class="p">,</span> <span class="s">u&quot;~&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">):</span>
+                <span class="c"># Array indexes should be turned into integers</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">part</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">document</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">LookupError</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">RefResolutionError</span><span class="p">(</span>
+                    <span class="s">&quot;Unresolvable JSON pointer: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">fragment</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">document</span>
+</div>
+<div class="viewcode-block" id="RefResolver.resolve_remote"><a class="viewcode-back" href="../../references.html#jsonschema.validators.RefResolver.resolve_remote">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_remote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve a remote ``uri``.</span>
+
+<span class="sd">        If called directly, does not check the store first, but after</span>
+<span class="sd">        retrieving the document at the specified URI it will be saved in</span>
+<span class="sd">        the store if :attr:`cache_remote` is True.</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            If the requests_ library is present, ``jsonschema`` will use it to</span>
+<span class="sd">            request the remote ``uri``, so that the correct encoding is</span>
+<span class="sd">            detected and used.</span>
+
+<span class="sd">            If it isn&#39;t, or if the scheme of the ``uri`` is not ``http`` or</span>
+<span class="sd">            ``https``, UTF-8 is assumed.</span>
+
+<span class="sd">        :argument str uri: the URI to resolve</span>
+<span class="sd">        :returns: the retrieved document</span>
+
+<span class="sd">        .. _requests: http://pypi.python.org/pypi/requests/</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">scheme</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span><span class="o">.</span><span class="n">scheme</span>
+
+        <span class="k">if</span> <span class="n">scheme</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span><span class="p">[</span><span class="n">scheme</span><span class="p">](</span><span class="n">uri</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">scheme</span> <span class="ow">in</span> <span class="p">[</span><span class="s">u&quot;http&quot;</span><span class="p">,</span> <span class="s">u&quot;https&quot;</span><span class="p">]</span> <span class="ow">and</span>
+            <span class="n">requests</span> <span class="ow">and</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">,</span> <span class="s">&quot;json&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+        <span class="p">):</span>
+            <span class="c"># Requests has support for detecting the correct encoding of</span>
+            <span class="c"># json over http</span>
+            <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="o">.</span><span class="n">json</span><span class="p">):</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span><span class="o">.</span><span class="n">json</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Otherwise, pass off to urllib and assume utf-8</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">urlopen</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_remote</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">[</span><span class="n">uri</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+</div></div>
+<div class="viewcode-block" id="validator_for"><a class="viewcode-back" href="../../creating.html#jsonschema.validators.validator_for">[docs]</a><span class="k">def</span> <span class="nf">validator_for</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_unset</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="n">_unset</span><span class="p">:</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="n">Draft4Validator</span>
+    <span class="k">return</span> <span class="n">meta_schemas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">u&quot;$schema&quot;</span><span class="p">,</span> <span class="s">u&quot;&quot;</span><span class="p">),</span> <span class="n">default</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="validate"><a class="viewcode-back" href="../../validate.html#jsonschema.validators.validate">[docs]</a><span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validate an instance under the given schema.</span>
+
+<span class="sd">        &gt;&gt;&gt; validate([2, 3, 4], {&quot;maxItems&quot; : 2})</span>
+<span class="sd">        Traceback (most recent call last):</span>
+<span class="sd">            ...</span>
+<span class="sd">        ValidationError: [2, 3, 4] is too long</span>
+
+<span class="sd">    :func:`validate` will first verify that the provided schema is itself</span>
+<span class="sd">    valid, since not doing so can lead to less obvious error messages and fail</span>
+<span class="sd">    in less obvious or consistent ways. If you know you have a valid schema</span>
+<span class="sd">    already or don&#39;t care, you might prefer using the</span>
+<span class="sd">    :meth:`~IValidator.validate` method directly on a specific validator</span>
+<span class="sd">    (e.g. :meth:`Draft4Validator.validate`).</span>
+
+
+<span class="sd">    :argument instance: the instance to validate</span>
+<span class="sd">    :argument schema: the schema to validate with</span>
+<span class="sd">    :argument cls: an :class:`IValidator` class that will be used to validate</span>
+<span class="sd">                   the instance.</span>
+
+<span class="sd">    If the ``cls`` argument is not provided, two things will happen in</span>
+<span class="sd">    accordance with the specification. First, if the schema has a</span>
+<span class="sd">    :validator:`$schema` property containing a known meta-schema [#]_ then the</span>
+<span class="sd">    proper validator will be used.  The specification recommends that all</span>
+<span class="sd">    schemas contain :validator:`$schema` properties for this reason. If no</span>
+<span class="sd">    :validator:`$schema` property is found, the default validator class is</span>
+<span class="sd">    :class:`Draft4Validator`.</span>
+
+<span class="sd">    Any other provided positional and keyword arguments will be passed on when</span>
+<span class="sd">    instantiating the ``cls``.</span>
+
+<span class="sd">    :raises:</span>
+<span class="sd">        :exc:`ValidationError` if the instance is invalid</span>
+
+<span class="sd">        :exc:`SchemaError` if the schema itself is invalid</span>
+
+<span class="sd">    .. rubric:: Footnotes</span>
+<span class="sd">    .. [#] known by a validator registered with :func:`validates`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">cls</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">cls</span> <span class="o">=</span> <span class="n">validator_for</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+    <span class="n">cls</span><span class="o">.</span><span class="n">check_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+    <span class="n">cls</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Julian Berman.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

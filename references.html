@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Resolving JSON References &mdash; jsonschema 2.5.1.post12 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.5.1.post12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="index.html" />
+    <link rel="next" title="Creating or Extending Validator Classes" href="creating.html" />
+    <link rel="prev" title="Handling Validation Errors" href="errors.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="creating.html" title="Creating or Extending Validator Classes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="errors.html" title="Handling Validation Errors"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="resolving-json-references">
+<h1>Resolving JSON References<a class="headerlink" href="#resolving-json-references" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="jsonschema.RefResolver">
+<em class="property">class </em><code class="descclassname">jsonschema.</code><code class="descname">RefResolver</code><span class="sig-paren">(</span><em>base_uri</em>, <em>referrer</em>, <em>store=()</em>, <em>cache_remote=True</em>, <em>handlers=()</em>, <em>urljoin_cache=None</em>, <em>remote_cache=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#RefResolver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.RefResolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve JSON References.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>base_uri</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; URI of the referring document</li>
+<li><strong>referrer</strong> &#8211; the actual referring document</li>
+<li><strong>store</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; a mapping from URIs to documents to cache</li>
+<li><strong>cache_remote</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; whether remote refs should be cached after
+first resolution</li>
+<li><strong>handlers</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; a mapping from URI schemes to functions that
+should be used to retrieve them</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Arguments functools.lru_cache urljoin_cache:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><p class="first">a cache that will be used for
+caching the results of joining the resolution scope to subscopes.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Arguments functools.lru_cache remote_cache:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><p class="first last">a cache that will be used for
+caching the results of resolved remote URLs.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="classmethod">
+<dt id="jsonschema.RefResolver.from_schema">
+<em class="property">classmethod </em><code class="descname">from_schema</code><span class="sig-paren">(</span><em>schema</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#RefResolver.from_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.RefResolver.from_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a resolver from a JSON schema object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>schema</strong> &#8211; the referring schema</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#jsonschema.RefResolver" title="jsonschema.RefResolver"><code class="xref py py-class docutils literal"><span class="pre">RefResolver</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.RefResolver.resolve_fragment">
+<code class="descname">resolve_fragment</code><span class="sig-paren">(</span><em>document</em>, <em>fragment</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#RefResolver.resolve_fragment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.RefResolver.resolve_fragment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve a <code class="docutils literal"><span class="pre">fragment</span></code> within the referenced <code class="docutils literal"><span class="pre">document</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>document</strong> &#8211; the referrant document</li>
+<li><strong>fragment</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; a URI fragment to resolve within it</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.RefResolver.resolve_remote">
+<code class="descname">resolve_remote</code><span class="sig-paren">(</span><em>uri</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#RefResolver.resolve_remote"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.RefResolver.resolve_remote" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve a remote <code class="docutils literal"><span class="pre">uri</span></code>.</p>
+<p>If called directly, does not check the store first, but after
+retrieving the document at the specified URI it will be saved in
+the store if <code class="xref py py-attr docutils literal"><span class="pre">cache_remote</span></code> is True.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>If the <a class="reference external" href="http://pypi.python.org/pypi/requests/">requests</a> library is present, <code class="docutils literal"><span class="pre">jsonschema</span></code> will use it to
+request the remote <code class="docutils literal"><span class="pre">uri</span></code>, so that the correct encoding is
+detected and used.</p>
+<p class="last">If it isn&#8217;t, or if the scheme of the <code class="docutils literal"><span class="pre">uri</span></code> is not <code class="docutils literal"><span class="pre">http</span></code> or
+<code class="docutils literal"><span class="pre">https</span></code>, UTF-8 is assumed.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uri</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; the URI to resolve</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the retrieved document</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="jsonschema.RefResolver.resolving">
+<code class="descname">resolving</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/jsonschema/validators.html#RefResolver.resolving"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.RefResolver.resolving" title="Permalink to this definition">¶</a></dt>
+<dd><p>Context manager which resolves a JSON <code class="docutils literal"><span class="pre">ref</span></code> and enters the
+resolution scope of this ref.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ref</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; reference to resolve</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="jsonschema.RefResolutionError">
+<em class="property">exception </em><code class="descclassname">jsonschema.</code><code class="descname">RefResolutionError</code><a class="reference internal" href="_modules/jsonschema/exceptions.html#RefResolutionError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jsonschema.RefResolutionError" title="Permalink to this definition">¶</a></dt>
+<dd><p>A JSON reference failed to resolve.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="errors.html"
+                        title="previous chapter">Handling Validation Errors</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="creating.html"
+                        title="next chapter">Creating or Extending Validator Classes</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="creating.html" title="Creating or Extending Validator Classes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="errors.html" title="Handling Validation Errors"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Julian Berman.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

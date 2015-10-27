@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Frequently Asked Questions &mdash; jsonschema 2.5.1.post12 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.5.1.post12',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="index.html" />
+    <link rel="prev" title="Creating or Extending Validator Classes" href="creating.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body role="document">
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="creating.html" title="Creating or Extending Validator Classes"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="frequently-asked-questions">
+<h1>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="why-doesn-t-my-schema-that-has-a-default-property-actually-set-the-default-on-my-instance">
+<h2>Why doesn&#8217;t my schema that has a default property actually set the default on my instance?<a class="headerlink" href="#why-doesn-t-my-schema-that-has-a-default-property-actually-set-the-default-on-my-instance" title="Permalink to this headline">¶</a></h2>
+<p>The basic answer is that the specification does not require that
+<a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.6.2">default</a> actually do anything.</p>
+<p>For an inkling as to <em>why</em> it doesn&#8217;t actually do anything, consider that none
+of the other validators modify the instance either. More importantly, having
+<a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.6.2">default</a> modify the instance can produce quite peculiar things.
+It&#8217;s perfectly valid (and perhaps even useful) to have a default that is not
+valid under the schema it lives in! So an instance modified by the default
+would pass validation the first time, but fail the second!</p>
+<p>Still, filling in defaults is a thing that is useful. <a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a>
+allows you to <a class="reference internal" href="creating.html"><em>define your own validator classes and callables</em></a>, so you can easily create a <code class="xref py py-class docutils literal"><span class="pre">IValidator</span></code> that does do
+default setting. Here&#8217;s some code to get you started. (In this code, we add
+the default properties to each object <em>before</em> the properties are validated,
+so the default values themselves will need to be valid under the schema.)</p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">Draft4Validator</span><span class="p">,</span> <span class="n">validators</span>
+
+
+<span class="k">def</span> <span class="nf">extend_with_default</span><span class="p">(</span><span class="n">validator_class</span><span class="p">):</span>
+    <span class="n">validate_properties</span> <span class="o">=</span> <span class="n">validator_class</span><span class="o">.</span><span class="n">VALIDATORS</span><span class="p">[</span><span class="s">&quot;properties&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">set_defaults</span><span class="p">(</span><span class="n">validator</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+        <span class="k">for</span> <span class="nb">property</span><span class="p">,</span> <span class="n">subschema</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s">&quot;default&quot;</span> <span class="ow">in</span> <span class="n">subschema</span><span class="p">:</span>
+                <span class="n">instance</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">property</span><span class="p">,</span> <span class="n">subschema</span><span class="p">[</span><span class="s">&quot;default&quot;</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">validate_properties</span><span class="p">(</span>
+            <span class="n">validator</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">yield</span> <span class="n">error</span>
+
+    <span class="k">return</span> <span class="n">validators</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">validator_class</span><span class="p">,</span> <span class="p">{</span><span class="s">&quot;properties&quot;</span> <span class="p">:</span> <span class="n">set_defaults</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="n">DefaultValidatingDraft4Validator</span> <span class="o">=</span> <span class="n">extend_with_default</span><span class="p">(</span><span class="n">Draft4Validator</span><span class="p">)</span>
+
+
+<span class="c"># Example usage:</span>
+<span class="n">obj</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;properties&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;foo&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;default&#39;</span><span class="p">:</span> <span class="s">&#39;bar&#39;</span><span class="p">}}}</span>
+<span class="c"># Note jsonschem.validate(obj, schema, cls=DefaultValidatingDraft4Validator)</span>
+<span class="c"># will not work because the metaschema contains `default` directives.</span>
+<span class="n">DefaultValidatingDraft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">obj</span> <span class="o">==</span> <span class="p">{</span><span class="s">&#39;foo&#39;</span><span class="p">:</span> <span class="s">&#39;bar&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>See the above-linked document for more info on how this works, but basically,
+it just extends the <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.8.3.3.2">properties</a> validator on a
+<code class="xref py py-class docutils literal"><span class="pre">Draft4Validator</span></code> to then go ahead and update all the defaults.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you&#8217;re interested in a more interesting solution to a larger class of these
+types of transformations, keep an eye on <a class="reference external" href="https://github.com/Julian/Seep">Seep</a>, which is an experimental data
+transformation and extraction library written on top of <a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a>.</p>
+</div>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p>The above code can provide default values for an entire object and all of its properties,
+but only if your schema provides a default value for the object itself, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;object&quot;</span><span class="p">,</span>
+    <span class="s">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;outer-object&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s">&quot;properties&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;inner-object&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;default&quot;</span><span class="p">:</span> <span class="s">&quot;INNER-DEFAULT&quot;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s">&quot;default&quot;</span><span class="p">:</span> <span class="p">{}</span> <span class="c"># &lt;-- MUST PROVIDE DEFAULT OBJECT</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">obj</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">DefaultValidatingDraft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">obj</span> <span class="o">==</span> <span class="p">{</span><span class="s">&#39;outer-object&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;inner-object&#39;</span><span class="p">:</span> <span class="s">&#39;INNER-DEFAULT&#39;</span><span class="p">}}</span>
+</pre></div>
+</div>
+<p>...but if you don&#8217;t provide a default value for your object,
+then it won&#8217;t be instantiated at all, much less populated with default properties.</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="k">del</span> <span class="n">schema</span><span class="p">[</span><span class="s">&quot;properties&quot;</span><span class="p">][</span><span class="s">&quot;outer-object&quot;</span><span class="p">][</span><span class="s">&quot;default&quot;</span><span class="p">]</span>
+<span class="n">obj2</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">DefaultValidatingDraft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">obj</span> <span class="o">==</span> <span class="p">{}</span> <span class="c"># whoops</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="how-do-jsonschema-version-numbers-work">
+<h2>How do jsonschema version numbers work?<a class="headerlink" href="#how-do-jsonschema-version-numbers-work" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">jsonschema</span></code> tries to follow the <a class="reference external" href="http://semver.org/">Semantic Versioning</a>
+specification.</p>
+<p>This means broadly that no backwards-incompatible changes should be made in
+minor releases (and certainly not in dot releases).</p>
+<p>The full picture requires defining what constitutes a backwards-incompatible
+change.</p>
+<p>The following are simple examples of things considered public API, and
+therefore should <em>not</em> be changed without bumping a major version number:</p>
+<blockquote>
+<div><ul class="simple">
+<li>module names and contents, when not marked private by Python convention
+(a single leading underscore)</li>
+<li>function and object signature (parameter order and name)</li>
+</ul>
+</div></blockquote>
+<p>The following are <em>not</em> considered public API and may change without notice:</p>
+<blockquote>
+<div><ul class="simple">
+<li>the exact wording and contents of error messages; typical
+reasons to do this seem to involve unit tests. API users are
+encouraged to use the extensive introspection provided in
+<a class="reference internal" href="errors.html#jsonschema.exceptions.ValidationError" title="jsonschema.exceptions.ValidationError"><code class="xref py py-class docutils literal"><span class="pre">ValidationError</span></code></a>s instead to make
+meaningful assertions about what failed.</li>
+<li>the order in which validation errors are returned or raised</li>
+<li>the <code class="docutils literal"><span class="pre">compat.py</span></code> module, which is for internal compatibility use</li>
+<li>anything marked private</li>
+</ul>
+</div></blockquote>
+<p>With the exception of the last two of those, flippant changes are avoided, but
+changes can and will be made if there is improvement to be had. Feel free to
+open an issue ticket if there is a specific issue or question worth raising.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Frequently Asked Questions</a><ul>
+<li><a class="reference internal" href="#why-doesn-t-my-schema-that-has-a-default-property-actually-set-the-default-on-my-instance">Why doesn&#8217;t my schema that has a default property actually set the default on my instance?</a></li>
+<li><a class="reference internal" href="#how-do-jsonschema-version-numbers-work">How do jsonschema version numbers work?</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="creating.html"
+                        title="previous chapter">Creating or Extending Validator Classes</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="creating.html" title="Creating or Extending Validator Classes"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">jsonschema 2.5.1.post12 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Julian Berman.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>
