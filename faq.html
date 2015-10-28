@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Frequently Asked Questions &mdash; jsonschema 2.5.1.post15 documentation</title>
+  <title>Frequently Asked Questions &mdash; jsonschema 2.5.1.post17 documentation</title>
   
 
   
@@ -30,7 +30,7 @@
   
 
   
-    <link rel="top" title="jsonschema 2.5.1.post15 documentation" href="index.html"/>
+    <link rel="top" title="jsonschema 2.5.1.post17 documentation" href="index.html"/>
         <link rel="prev" title="Creating or Extending Validator Classes" href="creating.html"/> 
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                2.5.1.post15
+                2.5.1.post17
               </div>
             
           
@@ -224,8 +224,8 @@ but only if your schema provides a default value for the object itself, like so:
 then it won&#8217;t be instantiated at all, much less populated with default properties.</p>
 <div class="last highlight-python"><div class="highlight"><pre><span class="k">del</span> <span class="n">schema</span><span class="p">[</span><span class="s">&quot;properties&quot;</span><span class="p">][</span><span class="s">&quot;outer-object&quot;</span><span class="p">][</span><span class="s">&quot;default&quot;</span><span class="p">]</span>
 <span class="n">obj2</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="n">DefaultValidatingDraft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-<span class="k">assert</span> <span class="n">obj</span> <span class="o">==</span> <span class="p">{}</span> <span class="c"># whoops</span>
+<span class="n">DefaultValidatingDraft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">obj2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">obj2</span> <span class="o">==</span> <span class="p">{}</span> <span class="c"># whoops</span>
 </pre></div>
 </div>
 </div>
@@ -305,7 +305,7 @@ open an issue ticket if there is a specific issue or question worth raising.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'2.5.1.post15',
+            VERSION:'2.5.1.post17',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

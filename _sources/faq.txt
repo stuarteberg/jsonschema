@@ -104,8 +104,8 @@ it just extends the :validator:`properties` validator on a
 
         del schema["properties"]["outer-object"]["default"]
         obj2 = {}
-        DefaultValidatingDraft4Validator(schema).validate(obj)
-        assert obj == {} # whoops
+        DefaultValidatingDraft4Validator(schema).validate(obj2)
+        assert obj2 == {} # whoops
 
 
 How do jsonschema version numbers work?
