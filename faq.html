@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Frequently Asked Questions &mdash; jsonschema 2.5.1.post12 documentation</title>
+  <title>Frequently Asked Questions &mdash; jsonschema 2.5.1.post15 documentation</title>
   
 
   
@@ -30,7 +30,7 @@
   
 
   
-    <link rel="top" title="jsonschema 2.5.1.post12 documentation" href="index.html"/>
+    <link rel="top" title="jsonschema 2.5.1.post15 documentation" href="index.html"/>
         <link rel="prev" title="Creating or Extending Validator Classes" href="creating.html"/> 
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                2.5.1.post12
+                2.5.1.post15
               </div>
             
           
@@ -148,7 +148,9 @@ valid under the schema it lives in! So an instance modified by the default
 would pass validation the first time, but fail the second!</p>
 <p>Still, filling in defaults is a thing that is useful. <a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a>
 allows you to <a class="reference internal" href="creating.html"><em>define your own validator classes and callables</em></a>, so you can easily create a <code class="xref py py-class docutils literal"><span class="pre">IValidator</span></code> that does do
-default setting. Here&#8217;s some code to get you started:</p>
+default setting. Here&#8217;s some code to get you started. (In this code, we add
+the default properties to each object <em>before</em> the properties are validated,
+so the default values themselves will need to be valid under the schema.)</p>
 <blockquote>
 <div><div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">Draft4Validator</span><span class="p">,</span> <span class="n">validators</span>
 
@@ -157,14 +159,14 @@ default setting. Here&#8217;s some code to get you started:</p>
     <span class="n">validate_properties</span> <span class="o">=</span> <span class="n">validator_class</span><span class="o">.</span><span class="n">VALIDATORS</span><span class="p">[</span><span class="s">&quot;properties&quot;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">set_defaults</span><span class="p">(</span><span class="n">validator</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+        <span class="k">for</span> <span class="nb">property</span><span class="p">,</span> <span class="n">subschema</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s">&quot;default&quot;</span> <span class="ow">in</span> <span class="n">subschema</span><span class="p">:</span>
+                <span class="n">instance</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">property</span><span class="p">,</span> <span class="n">subschema</span><span class="p">[</span><span class="s">&quot;default&quot;</span><span class="p">])</span>
+
         <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">validate_properties</span><span class="p">(</span>
             <span class="n">validator</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span>
         <span class="p">):</span>
             <span class="k">yield</span> <span class="n">error</span>
-
-        <span class="k">for</span> <span class="nb">property</span><span class="p">,</span> <span class="n">subschema</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-            <span class="k">if</span> <span class="s">&quot;default&quot;</span> <span class="ow">in</span> <span class="n">subschema</span><span class="p">:</span>
-                <span class="n">instance</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">property</span><span class="p">,</span> <span class="n">subschema</span><span class="p">[</span><span class="s">&quot;default&quot;</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">validators</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
         <span class="n">validator_class</span><span class="p">,</span> <span class="p">{</span><span class="s">&quot;properties&quot;</span> <span class="p">:</span> <span class="n">set_defaults</span><span class="p">},</span>
@@ -187,9 +189,46 @@ default setting. Here&#8217;s some code to get you started:</p>
 <p>See the above-linked document for more info on how this works, but basically,
 it just extends the <a class="reference external" href="http://json-schema.org/latest/json-schema-validation.html#rfc.section.8.3.3.2">properties</a> validator on a
 <code class="xref py py-class docutils literal"><span class="pre">Draft4Validator</span></code> to then go ahead and update all the defaults.</p>
-<p>If you&#8217;re interested in a more interesting solution to a larger class of these
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you&#8217;re interested in a more interesting solution to a larger class of these
 types of transformations, keep an eye on <a class="reference external" href="https://github.com/Julian/Seep">Seep</a>, which is an experimental data
 transformation and extraction library written on top of <a class="reference internal" href="index.html#module-jsonschema" title="jsonschema"><code class="xref py py-mod docutils literal"><span class="pre">jsonschema</span></code></a>.</p>
+</div>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p>The above code can provide default values for an entire object and all of its properties,
+but only if your schema provides a default value for the object itself, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;object&quot;</span><span class="p">,</span>
+    <span class="s">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;outer-object&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s">&quot;properties&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;inner-object&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;default&quot;</span><span class="p">:</span> <span class="s">&quot;INNER-DEFAULT&quot;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s">&quot;default&quot;</span><span class="p">:</span> <span class="p">{}</span> <span class="c"># &lt;-- MUST PROVIDE DEFAULT OBJECT</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">obj</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">DefaultValidatingDraft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">obj</span> <span class="o">==</span> <span class="p">{</span><span class="s">&#39;outer-object&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;inner-object&#39;</span><span class="p">:</span> <span class="s">&#39;INNER-DEFAULT&#39;</span><span class="p">}}</span>
+</pre></div>
+</div>
+<p>...but if you don&#8217;t provide a default value for your object,
+then it won&#8217;t be instantiated at all, much less populated with default properties.</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="k">del</span> <span class="n">schema</span><span class="p">[</span><span class="s">&quot;properties&quot;</span><span class="p">][</span><span class="s">&quot;outer-object&quot;</span><span class="p">][</span><span class="s">&quot;default&quot;</span><span class="p">]</span>
+<span class="n">obj2</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">DefaultValidatingDraft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">obj</span> <span class="o">==</span> <span class="p">{}</span> <span class="c"># whoops</span>
+</pre></div>
+</div>
+</div>
 </div>
 <div class="section" id="how-do-jsonschema-version-numbers-work">
 <h2>How do jsonschema version numbers work?<a class="headerlink" href="#how-do-jsonschema-version-numbers-work" title="Permalink to this headline">¶</a></h2>
@@ -266,7 +305,7 @@ open an issue ticket if there is a specific issue or question worth raising.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'2.5.1.post12',
+            VERSION:'2.5.1.post15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true
